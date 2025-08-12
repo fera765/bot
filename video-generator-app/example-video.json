@@ -1,0 +1,64 @@
+{
+  "title": "Mensagem no Ultrassom",
+  "episode": 1,
+  "totalEpisodes": 7,
+  "background": "minecraft",
+  "dialogues": [
+    {
+      "speaker": "Ava",
+      "message": "WE DID IT BABE!",
+      "type": "hook",
+      "caption": "O momento que mudou tudo..."
+    },
+    {
+      "speaker": "Ava",
+      "message": "I'M PREGNANT! 🎉",
+      "type": "revelation",
+      "image": "ultrasound.jpg",
+      "caption": "Detalhes importam."
+    },
+    {
+      "speaker": "Você",
+      "message": "YES! I'm so excited for US 😍",
+      "caption": "Uma resposta que esconde algo..."
+    },
+    {
+      "speaker": "Você",
+      "message": "I know this has been a dream of yours too",
+      "caption": "Mas será que era mesmo?"
+    },
+    {
+      "speaker": "Ava",
+      "message": "fr?",
+      "type": "question",
+      "caption": "A dúvida começa..."
+    },
+    {
+      "speaker": "Sistema",
+      "message": "⚠️ Mensagem deletada",
+      "type": "system",
+      "caption": "O que foi apagado?"
+    },
+    {
+      "speaker": "Ava",
+      "message": "Wait... what did you delete?",
+      "caption": "A tensão aumenta..."
+    },
+    {
+      "speaker": "Você",
+      "message": "Nothing important, just a typo",
+      "caption": "Mentira ou verdade?"
+    },
+    {
+      "speaker": "Ava",
+      "message": "You're acting weird... Is everything okay?",
+      "caption": "Ela percebeu algo..."
+    },
+    {
+      "speaker": "Sistema",
+      "message": "Continua no Ep. 2...",
+      "type": "alert",
+      "caption": ""
+    }
+  ]
+}

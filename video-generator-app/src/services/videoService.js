@@ -1,4 +1,4 @@
-const { createCanvas, loadImage } = require('canvas');
+const { createCanvas, loadImage, registerFont } = require('canvas');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const path = require('path');
@@ -14,14 +14,39 @@ class VideoService {
     this.width = 1920;
     this.height = 1080;
     this.tempDir = path.join(__dirname, '../../temp');
+    
+    // UI Colors and Styles
+    this.colors = {
+      topbarBg: 'rgba(20, 20, 20, 0.95)',
+      chatPanelBg: 'rgba(15, 15, 15, 0.85)',
+      youBubble: '#00BCD4', // Ciano
+      otherBubble: '#FFFFFF',
+      systemAlert: '#FF4444',
+      xpBar: '#FFD700',
+      xpBarBg: 'rgba(255, 255, 255, 0.1)',
+      captionBg: 'rgba(0, 0, 0, 0.7)',
+      chapterActive: '#FFD700',
+      chapterInactive: 'rgba(255, 255, 255, 0.3)'
+    };
+    
+    // Animation timings
+    this.timings = {
+      messageDelay: 2000, // 2s between messages
+      bubbleAnimation: 150, // 150ms pop animation
+      focusEffect: 600, // 600ms focus change
+      pulseEffect: 600, // 600ms pulse
+      holdCliffhanger: 2000 // 2s hold on cliffhanger
+    };
   }
 
   async generateVideo(videoData, jobId) {
     try {
       const {
-        title = 'Generated Video',
-        background = 'minecraft',
-        dialogues = []
+        title = 'Mensagem no Ultrassom',
+        episode = 1,
+        totalEpisodes = 7,
+        dialogues = [],
+        background = 'minecraft'
       } = videoData;
 
       // Create temp directory for frames
@@ -30,8 +55,14 @@ class VideoService {
 
       console.log(`Starting video generation for job ${jobId}`);
 
-      // Generate frames
-      const frames = await this.generateFrames(dialogues, background, jobTempDir);
+      // Generate frames with new UI
+      const frames = await this.generateFrames({
+        title,
+        episode,
+        totalEpisodes,
+        dialogues,
+        background
+      }, jobTempDir);
       
       // Create video from frames
       const outputFilename = `video_${Date.now()}_${jobId}.mp4`;
@@ -55,45 +86,76 @@ class VideoService {
     }
   }
 
-  async generateFrames(dialogues, backgroundType, tempDir) {
+  async generateFrames(videoData, tempDir) {
     const frames = [];
     let frameIndex = 0;
-
-    // Calculate frames per dialogue (2 seconds per dialogue)
-    const framesPerDialogue = this.frameRate * 2;
-
-    for (let i = 0; i < dialogues.length; i++) {
-      const dialogue = dialogues[i];
+    
+    const { title, episode, totalEpisodes, dialogues, background } = videoData;
+    
+    // Calculate total duration and frames
+    const totalMessages = dialogues.length;
+    const framesPerMessage = Math.floor(this.frameRate * 2); // 2 seconds per message
+    const totalFrames = totalMessages * framesPerMessage + this.frameRate * 2; // +2s for ending
+    
+    // State tracking
+    let currentMessageIndex = 0;
+    let messageProgress = 0;
+    let xpProgress = 0;
+    let visibleMessages = [];
+    let currentChapter = 1;
+    const totalChapters = 7;
+    
+    // Generate each frame
+    for (let f = 0; f < totalFrames; f++) {
+      // Calculate current state
+      const globalProgress = f / totalFrames;
+      const messageFrame = f % framesPerMessage;
+      messageProgress = messageFrame / framesPerMessage;
       
-      // Generate frames for this dialogue
-      for (let f = 0; f < framesPerDialogue; f++) {
-        const progress = f / framesPerDialogue;
-        const frame = await this.createFrame(
-          dialogue,
-          dialogues.slice(0, i + 1),
-          backgroundType,
-          progress,
-          frameIndex
-        );
-
-        const framePath = path.join(tempDir, `frame_${String(frameIndex).padStart(6, '0')}.png`);
-        await fs.writeFile(framePath, frame);
-        frames.push(framePath);
-        frameIndex++;
+      // Add new message when needed
+      if (f > 0 && f % framesPerMessage === 0 && currentMessageIndex < dialogues.length) {
+        visibleMessages.push({
+          ...dialogues[currentMessageIndex],
+          animationProgress: 0,
+          index: currentMessageIndex
+        });
+        currentMessageIndex++;
+        
+        // Update chapter progress
+        currentChapter = Math.min(totalChapters, Math.floor((currentMessageIndex / totalMessages) * totalChapters) + 1);
       }
-    }
-
-    // Add final frames (hold last dialogue for 1 second)
-    const finalFrames = this.frameRate;
-    for (let f = 0; f < finalFrames; f++) {
-      const lastDialogue = dialogues[dialogues.length - 1];
-      const frame = await this.createFrame(
-        lastDialogue,
-        dialogues,
-        backgroundType,
-        1,
-        frameIndex
-      );
+      
+      // Update animation progress for visible messages
+      visibleMessages = visibleMessages.map(msg => ({
+        ...msg,
+        animationProgress: Math.min(1, msg.animationProgress + 0.1)
+      }));
+      
+      // Update XP progress
+      xpProgress = currentMessageIndex / totalMessages;
+      
+      // Check if we're at a key moment
+      const isHookMoment = f < this.frameRate * 2; // First 2 seconds
+      const isRevelation = dialogues[currentMessageIndex - 1]?.type === 'revelation';
+      const isCliffhanger = currentMessageIndex >= dialogues.length - 1 && f >= totalFrames - this.frameRate * 2;
+      
+      // Create frame
+      const frame = await this.createFrame({
+        title,
+        episode,
+        totalEpisodes,
+        visibleMessages,
+        currentChapter,
+        totalChapters,
+        xpProgress,
+        globalProgress,
+        messageProgress,
+        background,
+        isHookMoment,
+        isRevelation,
+        isCliffhanger,
+        frameNumber: f
+      });
 
       const framePath = path.join(tempDir, `frame_${String(frameIndex).padStart(6, '0')}.png`);
       await fs.writeFile(framePath, frame);
@@ -104,229 +166,404 @@ class VideoService {
     return frames;
   }
 
-  async createFrame(currentDialogue, allDialogues, backgroundType, progress, frameNumber) {
+  async createFrame(state) {
     const canvas = createCanvas(this.width, this.height);
     const ctx = canvas.getContext('2d');
 
-    // Draw background
-    await this.drawBackground(ctx, backgroundType, frameNumber);
-
-    // Draw chat interface
-    await this.drawChatInterface(ctx, allDialogues, progress);
-
-    // If dialogue has an image, draw it
-    if (currentDialogue.image && progress > 0.3) {
-      await this.drawDialogueImage(ctx, currentDialogue.image, progress);
+    // 1. Draw dynamic background
+    await this.drawDynamicBackground(ctx, state);
+    
+    // 2. Apply focus effects if needed
+    if (state.isRevelation || state.isCliffhanger) {
+      this.applyFocusEffect(ctx, state);
     }
+    
+    // 3. Draw topbar
+    this.drawTopbar(ctx, state);
+    
+    // 4. Draw chat panel
+    await this.drawChatPanel(ctx, state);
+    
+    // 5. Draw footer with XP bar
+    this.drawFooter(ctx, state);
+    
+    // 6. Draw caption if needed
+    if (state.visibleMessages.length > 0) {
+      this.drawCaption(ctx, state);
+    }
+    
+    // 7. Apply microinteractions
+    this.applyMicrointeractions(ctx, state);
 
     return canvas.toBuffer('image/png');
   }
 
-  async drawBackground(ctx, backgroundType, frameNumber) {
-    // Create animated gradient background based on type
+  async drawDynamicBackground(ctx, state) {
+    const { background, frameNumber, isRevelation } = state;
+    
+    // Create animated gradient background
     const gradients = {
-      minecraft: ['#87CEEB', '#98D98E', '#90EE90'],
-      space: ['#000428', '#004e92', '#1a1a2e'],
-      cityscape: ['#141E30', '#243B55', '#2C5F7C'],
+      minecraft: ['#4CAF50', '#8BC34A', '#CDDC39'],
+      space: ['#000428', '#004e92', '#009FFD'],
+      cityscape: ['#0F2027', '#203A43', '#2C5364'],
       default: ['#667eea', '#764ba2', '#f093fb']
     };
 
-    const colors = gradients[backgroundType] || gradients.default;
+    const colors = gradients[background] || gradients.default;
     
-    // Animated gradient
+    // Animated gradient with movement
     const offset = (frameNumber * 2) % 360;
-    const gradient = ctx.createLinearGradient(0, 0, this.width, this.height);
+    const gradient = ctx.createLinearGradient(
+      Math.cos(offset * Math.PI / 180) * this.width,
+      Math.sin(offset * Math.PI / 180) * this.height,
+      this.width - Math.cos(offset * Math.PI / 180) * this.width,
+      this.height - Math.sin(offset * Math.PI / 180) * this.height
+    );
     
     colors.forEach((color, index) => {
-      const position = (index / (colors.length - 1));
-      gradient.addColorStop(position, color);
+      gradient.addColorStop(index / (colors.length - 1), color);
     });
 
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, this.width, this.height);
-
-    // Add animated elements based on background type
-    if (backgroundType === 'minecraft') {
-      this.drawMinecraftElements(ctx, frameNumber);
-    } else if (backgroundType === 'space') {
-      this.drawSpaceElements(ctx, frameNumber);
+    
+    // Add gameplay elements with high saturation
+    this.drawGameplayElements(ctx, state);
+    
+    // Apply blur and desaturation during revelations
+    if (isRevelation) {
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillRect(0, 0, this.width, this.height);
+      ctx.globalAlpha = 1;
     }
   }
 
-  drawMinecraftElements(ctx, frameNumber) {
-    // Draw simple block-like elements
-    const blockSize = 60;
-    const numBlocks = 15;
+  drawGameplayElements(ctx, state) {
+    const { frameNumber, background } = state;
     
-    ctx.globalAlpha = 0.3;
-    
-    for (let i = 0; i < numBlocks; i++) {
-      const x = (i * 150 + frameNumber * 2) % (this.width + blockSize) - blockSize;
-      const y = this.height - 200 + Math.sin(i + frameNumber / 30) * 50;
-      
-      // Draw block
-      ctx.fillStyle = i % 2 === 0 ? '#8B7355' : '#228B22';
-      ctx.fillRect(x, y, blockSize, blockSize);
-      
-      // Add highlight
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-      ctx.fillRect(x, y, blockSize, 5);
-      ctx.fillRect(x, y, 5, blockSize);
+    if (background === 'minecraft') {
+      // Draw moving blocks
+      ctx.globalAlpha = 0.6;
+      for (let i = 0; i < 20; i++) {
+        const x = ((i * 100 + frameNumber * 3) % (this.width + 100)) - 50;
+        const y = 200 + Math.sin((frameNumber + i * 30) / 30) * 100;
+        const size = 40 + Math.sin(i) * 20;
+        
+        ctx.fillStyle = i % 2 === 0 ? '#8B4513' : '#228B22';
+        ctx.fillRect(x, y, size, size);
+        
+        // Add highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(x, y, size, 4);
+        ctx.fillRect(x, y, 4, size);
+      }
+      ctx.globalAlpha = 1;
     }
-    
-    ctx.globalAlpha = 1;
   }
 
-  drawSpaceElements(ctx, frameNumber) {
-    // Draw stars
-    ctx.fillStyle = 'white';
-    const numStars = 100;
+  drawTopbar(ctx, state) {
+    const { title, episode, totalEpisodes, currentChapter, totalChapters, globalProgress } = state;
+    const topbarHeight = 80;
     
-    for (let i = 0; i < numStars; i++) {
-      const x = (i * 73) % this.width;
-      const y = (i * 37) % this.height;
-      const size = (i % 3) + 1;
-      const opacity = 0.3 + (Math.sin(frameNumber / 20 + i) + 1) * 0.35;
+    // Draw topbar background
+    ctx.fillStyle = this.colors.topbarBg;
+    ctx.fillRect(0, 0, this.width, topbarHeight);
+    
+    // Left: Logo and title
+    const logoSize = 50;
+    const logoX = 30;
+    const logoY = (topbarHeight - logoSize) / 2;
+    
+    // Draw logo gradient square
+    const logoGradient = ctx.createLinearGradient(logoX, logoY, logoX + logoSize, logoY + logoSize);
+    logoGradient.addColorStop(0, '#FFD700');
+    logoGradient.addColorStop(1, '#FFA000');
+    ctx.fillStyle = logoGradient;
+    ctx.fillRect(logoX, logoY, logoSize, logoSize);
+    
+    // Draw title
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 24px Arial';
+    ctx.fillText(title, logoX + logoSize + 20, topbarHeight / 2 + 8);
+    
+    // Center: Chapter progress dots
+    const dotsStartX = this.width / 2 - (totalChapters * 30) / 2;
+    for (let i = 0; i < totalChapters; i++) {
+      const dotX = dotsStartX + i * 30;
+      const dotY = topbarHeight / 2;
+      const isActive = i < currentChapter;
+      const isGlowing = globalProgress > 0.85 && isActive;
+      
+      // Draw dot
+      ctx.beginPath();
+      ctx.arc(dotX, dotY, 8, 0, Math.PI * 2);
+      
+      if (isGlowing) {
+        // Add glow effect
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = this.colors.chapterActive;
+      }
+      
+      ctx.fillStyle = isActive ? this.colors.chapterActive : this.colors.chapterInactive;
+      ctx.fill();
+      
+      ctx.shadowBlur = 0;
+      
+      // Connect dots with line
+      if (i < totalChapters - 1) {
+        ctx.strokeStyle = this.colors.chapterInactive;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(dotX + 8, dotY);
+        ctx.lineTo(dotX + 22, dotY);
+        ctx.stroke();
+      }
+    }
+    
+    // Right: Episode counter
+    const episodeText = `Ep. ${episode}/${totalEpisodes}`;
+    const episodeWidth = 120;
+    const episodeX = this.width - episodeWidth - 30;
+    const episodeY = (topbarHeight - 40) / 2;
+    
+    // Pulse effect near climax
+    if (globalProgress > 0.85) {
+      const pulse = Math.sin(state.frameNumber / 10) * 0.05 + 1;
+      ctx.save();
+      ctx.translate(episodeX + episodeWidth / 2, episodeY + 20);
+      ctx.scale(pulse, pulse);
+      ctx.translate(-(episodeX + episodeWidth / 2), -(episodeY + 20));
+    }
+    
+    // Draw episode capsule
+    ctx.fillStyle = '#FFD700';
+    this.roundRect(ctx, episodeX, episodeY, episodeWidth, 40, 20);
+    ctx.fill();
+    
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(episodeText, episodeX + episodeWidth / 2, episodeY + 25);
+    ctx.textAlign = 'left';
+    
+    if (globalProgress > 0.85) {
+      ctx.restore();
+    }
+  }
+
+  async drawChatPanel(ctx, state) {
+    const { visibleMessages, isCliffhanger } = state;
+    
+    // Chat panel dimensions
+    const panelWidth = 600;
+    const panelHeight = 700;
+    const panelX = (this.width - panelWidth) / 2;
+    const panelY = 120;
+    
+    // Draw glass panel background
+    ctx.fillStyle = this.colors.chatPanelBg;
+    this.roundRect(ctx, panelX, panelY, panelWidth, panelHeight, 20);
+    ctx.fill();
+    
+    // Add glass border effect
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = 2;
+    this.roundRect(ctx, panelX, panelY, panelWidth, panelHeight, 20);
+    ctx.stroke();
+    
+    // Draw messages
+    let currentY = panelY + 30;
+    const maxVisibleMessages = 8;
+    const startIndex = Math.max(0, visibleMessages.length - maxVisibleMessages);
+    
+    for (let i = startIndex; i < visibleMessages.length; i++) {
+      const message = visibleMessages[i];
+      const isYou = message.speaker === 'You' || message.speaker === 'Você';
+      const isSystem = message.type === 'system' || message.type === 'alert';
+      
+      // Calculate bubble position with animation
+      const animOffset = (1 - message.animationProgress) * 20;
+      const bubbleY = currentY + animOffset;
+      const opacity = message.animationProgress;
       
       ctx.globalAlpha = opacity;
-      ctx.beginPath();
-      ctx.arc(x, y, size, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    
-    ctx.globalAlpha = 1;
-  }
-
-  async drawChatInterface(ctx, dialogues, progress) {
-    // Chat container
-    const chatWidth = 600;
-    const chatHeight = 800;
-    const chatX = (this.width - chatWidth) / 2;
-    const chatY = (this.height - chatHeight) / 2;
-
-    // Draw phone/chat container
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-    ctx.strokeStyle = '#e0e0e0';
-    ctx.lineWidth = 2;
-    
-    // Rounded rectangle for chat container
-    this.roundRect(ctx, chatX, chatY, chatWidth, chatHeight, 20);
-    ctx.fill();
-    ctx.stroke();
-
-    // Draw header
-    ctx.fillStyle = '#075e54';
-    this.roundRect(ctx, chatX, chatY, chatWidth, 80, [20, 20, 0, 0]);
-    ctx.fill();
-
-    // Header text
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 24px Arial';
-    ctx.fillText('Chat', chatX + 20, chatY + 50);
-
-    // Draw messages
-    const messageStartY = chatY + 100;
-    let currentY = messageStartY;
-    const messageSpacing = 20;
-
-    for (let i = 0; i < dialogues.length; i++) {
-      const dialogue = dialogues[i];
-      const isVisible = i < dialogues.length - 1 || progress > 0.1;
       
-      if (!isVisible) continue;
-
-      const isLeft = i % 2 === 0;
-      const messageOpacity = i === dialogues.length - 1 ? 
-        Math.min(1, progress * 2) : 1;
-
-      ctx.globalAlpha = messageOpacity;
-
-      // Message bubble
-      const maxWidth = chatWidth - 100;
+      // Draw message bubble
+      const maxBubbleWidth = panelWidth - 80;
       const padding = 15;
       
       // Measure text
-      ctx.font = '18px Arial';
-      const lines = this.wrapText(ctx, dialogue.message, maxWidth - padding * 2);
-      const messageHeight = lines.length * 25 + padding * 2;
-      const messageWidth = Math.min(
-        maxWidth,
+      ctx.font = '16px Arial';
+      const lines = this.wrapText(ctx, message.message, maxBubbleWidth - padding * 2);
+      const bubbleHeight = lines.length * 24 + padding * 2;
+      const bubbleWidth = Math.min(
+        maxBubbleWidth,
         Math.max(...lines.map(line => ctx.measureText(line).width)) + padding * 2
       );
-
-      const messageX = isLeft ? 
-        chatX + 20 : 
-        chatX + chatWidth - messageWidth - 20;
-
-      // Draw speaker name
-      ctx.fillStyle = '#666';
-      ctx.font = '14px Arial';
-      ctx.fillText(dialogue.speaker, messageX, currentY - 5);
-
-      // Draw message bubble
-      ctx.fillStyle = isLeft ? '#e3f2fd' : '#dcf8c6';
-      this.roundRect(ctx, messageX, currentY, messageWidth, messageHeight, 15);
+      
+      // Position based on sender
+      const bubbleX = isYou ? 
+        panelX + panelWidth - bubbleWidth - 40 : 
+        panelX + 40;
+      
+      // Choose bubble color
+      let bubbleColor = isYou ? this.colors.youBubble : this.colors.otherBubble;
+      if (isSystem) bubbleColor = this.colors.systemAlert;
+      if (isCliffhanger && i === visibleMessages.length - 1) bubbleColor = this.colors.systemAlert;
+      
+      // Draw bubble with pop animation
+      const scale = 0.95 + message.animationProgress * 0.05;
+      ctx.save();
+      ctx.translate(bubbleX + bubbleWidth / 2, bubbleY + bubbleHeight / 2);
+      ctx.scale(scale, scale);
+      ctx.translate(-(bubbleX + bubbleWidth / 2), -(bubbleY + bubbleHeight / 2));
+      
+      ctx.fillStyle = bubbleColor;
+      this.roundRect(ctx, bubbleX, bubbleY, bubbleWidth, bubbleHeight, 15);
       ctx.fill();
-
-      // Draw message text
-      ctx.fillStyle = '#000';
-      ctx.font = '18px Arial';
+      
+      // Draw text
+      ctx.fillStyle = isYou || isSystem ? '#FFFFFF' : '#000000';
+      ctx.font = '16px Arial';
       lines.forEach((line, lineIndex) => {
-        ctx.fillText(line, messageX + padding, currentY + padding + 20 + lineIndex * 25);
+        ctx.fillText(line, bubbleX + padding, bubbleY + padding + 20 + lineIndex * 24);
       });
-
-      currentY += messageHeight + messageSpacing + 20;
+      
+      // Draw timestamp if it's an image
+      if (message.image) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.font = '12px Arial';
+        ctx.fillText('10:23', bubbleX + bubbleWidth - 45, bubbleY + bubbleHeight - 10);
+      }
+      
+      ctx.restore();
+      ctx.globalAlpha = 1;
+      
+      currentY = bubbleY + bubbleHeight + 20;
     }
-
-    ctx.globalAlpha = 1;
+    
+    // Draw "Continua..." message if it's a cliffhanger
+    if (isCliffhanger && state.globalProgress > 0.95) {
+      ctx.fillStyle = this.colors.systemAlert;
+      ctx.font = 'bold 20px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('Continua no Ep. 2...', this.width / 2, panelY + panelHeight - 40);
+      ctx.textAlign = 'left';
+    }
   }
 
-  async drawDialogueImage(ctx, imageUrl, progress) {
-    try {
-      // Download and process image
-      const imagePath = path.join(this.tempDir, `temp_image_${Date.now()}.jpg`);
-      
-      if (imageUrl.startsWith('http')) {
-        const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-        await fs.writeFile(imagePath, response.data);
-      }
-
-      // Resize image if needed
-      const resizedPath = path.join(this.tempDir, `resized_${Date.now()}.jpg`);
-      await sharp(imagePath)
-        .resize(400, 400, { fit: 'inside' })
-        .toFile(resizedPath);
-
-      const image = await loadImage(resizedPath);
-      
-      // Animate image appearance
-      const scale = 0.5 + progress * 0.5;
-      const opacity = Math.min(1, (progress - 0.3) * 3);
-      
-      ctx.globalAlpha = opacity;
-      
-      const imageX = this.width - 500;
-      const imageY = 100;
-      const imageWidth = image.width * scale;
-      const imageHeight = image.height * scale;
-
-      // Draw image with shadow
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-      ctx.shadowBlur = 20;
-      ctx.shadowOffsetX = 5;
-      ctx.shadowOffsetY = 5;
-      
-      ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight);
-      
-      ctx.shadowColor = 'transparent';
+  drawFooter(ctx, state) {
+    const { xpProgress, globalProgress } = state;
+    const footerHeight = 100;
+    const footerY = this.height - footerHeight;
+    
+    // Draw footer background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(0, footerY, this.width, footerHeight);
+    
+    // Draw XP bar
+    const barWidth = this.width - 400;
+    const barHeight = 30;
+    const barX = 50;
+    const barY = footerY + (footerHeight - barHeight) / 2;
+    
+    // XP bar background
+    ctx.fillStyle = this.colors.xpBarBg;
+    this.roundRect(ctx, barX, barY, barWidth, barHeight, 15);
+    ctx.fill();
+    
+    // XP bar progress
+    const progressWidth = barWidth * xpProgress;
+    const xpGradient = ctx.createLinearGradient(barX, barY, barX + progressWidth, barY);
+    xpGradient.addColorStop(0, '#FFD700');
+    xpGradient.addColorStop(1, '#FFA000');
+    ctx.fillStyle = xpGradient;
+    this.roundRect(ctx, barX, barY, progressWidth, barHeight, 15);
+    ctx.fill();
+    
+    // Flash effect at 100%
+    if (xpProgress >= 0.99) {
+      const flash = Math.sin(state.frameNumber / 3) * 0.3 + 0.7;
+      ctx.globalAlpha = flash;
+      ctx.fillStyle = '#FFFFFF';
+      this.roundRect(ctx, barX, barY, progressWidth, barHeight, 15);
+      ctx.fill();
       ctx.globalAlpha = 1;
+    }
+    
+    // Draw progress label
+    if (xpProgress > 0.85 && xpProgress < 0.95) {
+      ctx.fillStyle = '#FFD700';
+      ctx.font = '14px Arial';
+      ctx.fillText('Chegando no clímax...', barX + progressWidth + 10, barY - 5);
+    }
+    
+    // Draw time badge
+    const badgeX = this.width - 300;
+    const badgeY = barY;
+    const badgeWidth = 150;
+    
+    ctx.fillStyle = '#FFD700';
+    this.roundRect(ctx, badgeX, badgeY, badgeWidth, barHeight, 15);
+    ctx.fill();
+    
+    // Clock icon and text
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('🕐 19H Diário', badgeX + badgeWidth / 2, badgeY + 20);
+    ctx.textAlign = 'left';
+  }
 
-      // Clean up temp images
-      await fs.unlink(imagePath).catch(() => {});
-      await fs.unlink(resizedPath).catch(() => {});
+  drawCaption(ctx, state) {
+    const { visibleMessages } = state;
+    if (visibleMessages.length === 0) return;
+    
+    const lastMessage = visibleMessages[visibleMessages.length - 1];
+    if (!lastMessage.caption) return;
+    
+    // Caption appears for 2 seconds after message
+    if (lastMessage.animationProgress < 0.8) {
+      const captionY = 850;
+      const captionHeight = 40;
+      
+      // Draw caption background
+      ctx.fillStyle = this.colors.captionBg;
+      ctx.fillRect(0, captionY, this.width, captionHeight);
+      
+      // Draw caption text
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'italic 16px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(lastMessage.caption || 'Detalhes importam.', this.width / 2, captionY + 25);
+      ctx.textAlign = 'left';
+    }
+  }
 
-    } catch (error) {
-      console.error('Error drawing dialogue image:', error);
+  applyFocusEffect(ctx, state) {
+    const { isRevelation, messageProgress } = state;
+    
+    if (isRevelation && messageProgress < 0.3) {
+      // Darken background during revelation
+      const darkness = 0.1 * (1 - messageProgress / 0.3);
+      ctx.fillStyle = `rgba(0, 0, 0, ${darkness})`;
+      ctx.fillRect(0, 0, this.width, this.height);
+    }
+  }
+
+  applyMicrointeractions(ctx, state) {
+    const { isHookMoment, frameNumber } = state;
+    
+    // Micro zoom on hook moment
+    if (isHookMoment) {
+      const zoom = 1 + Math.sin(frameNumber / 20) * 0.02;
+      ctx.save();
+      ctx.translate(this.width / 2, this.height / 2);
+      ctx.scale(zoom, zoom);
+      ctx.translate(-this.width / 2, -this.height / 2);
+      // Content would be redrawn here in a real implementation
+      ctx.restore();
     }
   }
 
@@ -380,11 +617,11 @@ class VideoService {
         .outputOptions([
           '-c:v libx264',
           '-pix_fmt yuv420p',
-          '-crf 23',
-          '-preset medium',
-          '-movflags +faststart'
+          '-crf 18', // Higher quality
+          '-preset slow', // Better compression
+          '-movflags +faststart',
+          '-vf scale=1920:1080'
         ])
-        .size('1920x1080')
         .fps(this.frameRate)
         .on('start', (commandLine) => {
           console.log('FFmpeg command:', commandLine);
