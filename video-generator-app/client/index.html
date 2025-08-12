@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Generator - Chat Animation</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎬 Video Generator</h1>
+            <p>Crie vídeos animados com diálogos estilo chat</p>
+        </header>
+
+        <main>
+            <!-- Input Section -->
+            <section class="input-section">
+                <h2>📝 Configurar Vídeo</h2>
+                
+                <div class="input-methods">
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" data-tab="json-input">Colar JSON</button>
+                        <button class="tab-btn" data-tab="file-input">Upload Arquivo</button>
+                        <button class="tab-btn" data-tab="form-input">Formulário</button>
+                    </div>
+
+                    <!-- JSON Input Tab -->
+                    <div class="tab-content" id="json-input">
+                        <textarea id="json-textarea" placeholder='Cole seu JSON aqui...
+
+Exemplo:
+{
+  "title": "Meu Vídeo",
+  "background": "minecraft",
+  "dialogues": [
+    {
+      "speaker": "João",
+      "message": "Olá! Como você está?"
+    },
+    {
+      "speaker": "Maria",
+      "message": "Estou bem! E você?"
+    }
+  ]
+}'></textarea>
+                        <button class="btn btn-primary" onclick="generateFromJSON()">
+                            <span class="btn-icon">🚀</span> Gerar Vídeo
+                        </button>
+                    </div>
+
+                    <!-- File Input Tab -->
+                    <div class="tab-content hidden" id="file-input">
+                        <div class="file-upload">
+                            <input type="file" id="json-file" accept=".json" onchange="handleFileSelect(event)">
+                            <label for="json-file" class="file-label">
+                                <span class="file-icon">📁</span>
+                                <span>Escolher arquivo JSON</span>
+                            </label>
+                            <div id="file-info" class="file-info hidden"></div>
+                        </div>
+                        <button class="btn btn-primary" onclick="generateFromFile()" disabled id="generate-file-btn">
+                            <span class="btn-icon">🚀</span> Gerar Vídeo
+                        </button>
+                    </div>
+
+                    <!-- Form Input Tab -->
+                    <div class="tab-content hidden" id="form-input">
+                        <form id="video-form">
+                            <div class="form-group">
+                                <label for="form-title">Título do Vídeo</label>
+                                <input type="text" id="form-title" placeholder="Meu Vídeo Incrível">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="form-background">Fundo</label>
+                                <select id="form-background">
+                                    <option value="minecraft">Minecraft</option>
+                                    <option value="space">Espaço</option>
+                                    <option value="cityscape">Cidade</option>
+                                    <option value="default">Gradiente Colorido</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Diálogos</label>
+                                <div id="dialogues-container">
+                                    <div class="dialogue-item">
+                                        <input type="text" placeholder="Nome" class="speaker-input">
+                                        <textarea placeholder="Mensagem" class="message-input"></textarea>
+                                        <input type="url" placeholder="URL da imagem (opcional)" class="image-input">
+                                        <button type="button" class="btn-remove" onclick="removeDialogue(this)">❌</button>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-secondary" onclick="addDialogue()">
+                                    ➕ Adicionar Diálogo
+                                </button>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <span class="btn-icon">🚀</span> Gerar Vídeo
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Status Display -->
+                <div id="generation-status" class="status-container hidden">
+                    <div class="status-header">
+                        <h3>Status da Geração</h3>
+                        <button class="btn-close" onclick="closeStatus()">✖</button>
+                    </div>
+                    <div class="status-content">
+                        <div class="spinner"></div>
+                        <p id="status-message">Iniciando geração do vídeo...</p>
+                        <div class="progress-bar hidden">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Videos Section -->
+            <section class="videos-section">
+                <div class="section-header">
+                    <h2>🎥 Vídeos Gerados</h2>
+                    <button class="btn btn-secondary" onclick="loadVideos()">
+                        🔄 Atualizar Lista
+                    </button>
+                </div>
+                
+                <div id="videos-grid" class="videos-grid">
+                    <!-- Videos will be loaded here -->
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Video Generator © 2024 | Desenvolvido com Node.js, Canvas e FFmpeg</p>
+        </footer>
+    </div>
+
+    <!-- Video Modal -->
+    <div id="video-modal" class="modal hidden">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">✖</button>
+            <video id="modal-video" controls></video>
+            <div class="modal-actions">
+                <button class="btn btn-primary" id="download-btn">
+                    ⬇️ Download
+                </button>
+                <button class="btn btn-danger" id="delete-btn">
+                    🗑️ Deletar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
