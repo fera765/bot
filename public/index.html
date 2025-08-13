@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gerador de Vídeo 16:9</title>
+  <link rel="stylesheet" href="/public/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Gerador de Vídeo 16:9 — UI de Chat</h1>
+
+    <section class="card">
+      <h2>Novo vídeo</h2>
+      <form id="gen-form">
+        <div class="grid">
+          <label>Título
+            <input type="text" name="title" value="Mensagem no Ultrassom" />
+          </label>
+          <label>Episódio
+            <input type="number" name="episode" value="1" min="1" />
+          </label>
+          <label>Total de Episódios
+            <input type="number" name="totalEpisodes" value="7" min="1" />
+          </label>
+          <label>Duração (s)
+            <input type="number" name="durationSec" value="90" min="10" max="180" />
+          </label>
+        </div>
+        <label>Mensagens (JSON)
+          <textarea name="messages" rows="8">[
+  {"type":"text","who":"other","name":"Ava","text":"WE DID IT BABE! I'M PREGNANT!"},
+  {"type":"text","who":"you","text":"fr?"},
+  {"type":"text","who":"other","name":"Ava","text":"YES! I'm so excited for US 😘"},
+  {"type":"text","who":"other","name":"Ava","text":"I know this has been a dream of yours too"},
+  {"type":"system","text":"Detalhes importam."},
+  {"type":"media","who":"other","name":"Ava","image":"","caption":"Ultrassom 10:23"},
+  {"type":"alert","text":"Continua no Ep. 2…"}
+]</textarea>
+        </label>
+        <button type="submit">Gerar</button>
+      </form>
+      <div id="progress" class="progress hidden"></div>
+    </section>
+
+    <section class="card">
+      <h2>Vídeos gerados</h2>
+      <div id="videos"></div>
+    </section>
+  </div>
+
+  <script src="/public/script.js"></script>
+</body>
+</html>

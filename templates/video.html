@@ -1,0 +1,201 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Renderer</title>
+  <style>
+    :root{
+      --yellow:#f2c94c; --cyan:#56ccf2; --red:#ff5b5b; --panel:#0e1116cc; --text:#e6edf3; --muted:#9aa4b2;
+    }
+    html,body{margin:0;height:100%;overflow:hidden;background:#000;color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',sans-serif}
+    .stage{position:relative;width:100vw;height:100vh;background:#000}
+
+    /* Dynamic background */
+    .bg{position:absolute;inset:0;overflow:hidden;filter:saturate(1.25) contrast(1.1)}
+    .bg .layer{position:absolute;inset:-10%;background:conic-gradient(from 90deg at 30% 50%, #6ee7b7, #fde047, #60a5fa, #f472b6, #6ee7b7);animation:spin 30s linear infinite}
+    .grain{position:absolute;inset:0;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="n"><feTurbulence baseFrequency="0.8" numOctaves="2"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity=".04"/></svg>');mix-blend-mode:overlay}
+    @keyframes spin{0%{transform:scale(1.2) rotate(0)}100%{transform:scale(1.2) rotate(360deg)}}
+
+    /* Topbar */
+    .topbar{position:absolute;left:0;right:0;top:0;height:72px;display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,0));z-index:5}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#fce27d,#f2c94c 40%,#bfa22e);box-shadow:0 0 0 1px rgba(0,0,0,.5) inset}
+    .title{font-weight:800;letter-spacing:.2px}
+    .chapters{display:flex;gap:10px;align-items:center}
+    .dot{width:10px;height:10px;border-radius:50%;background:#444;box-shadow:0 0 0 1px rgba(255,255,255,.12) inset}
+    .dot.active{background:var(--yellow)}
+    .dot.glow{box-shadow:0 0 12px 2px #f2c94c}
+    .pill{background:var(--yellow);color:#222;padding:8px 14px;border-radius:999px;font-weight:800}
+
+    /* Chat panel */
+    .panel{position:absolute;inset:90px 60px 90px;display:flex;justify-content:center;align-items:flex-start;z-index:6}
+    .chat{position:relative;width:min(900px,70vw);height:calc(100%);background:var(--panel);backdrop-filter:blur(8px);border-radius:20px;border:1px solid rgba(255,255,255,.08);padding:18px;display:flex;flex-direction:column}
+    .messages{flex:1;overflow:hidden;position:relative}
+    .stream{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;gap:10px}
+    .bubble{max-width:70%;padding:12px 14px;border-radius:16px;font-size:16px;line-height:1.35;color:#0b0f14}
+    .bubble.other{align-self:flex-start;background:#fff}
+    .bubble.you{align-self:flex-end;background:var(--cyan);color:#0b0f14}
+    .bubble.system{align-self:center;background:var(--red);color:#fff;font-weight:800}
+    .bubble.media{padding:8px;background:#fff}
+    .bubble img{width:260px;height:auto;border-radius:12px;display:block}
+    .timestamp{font-size:12px;color:#444;margin-top:4px}
+
+    .karaoke{position:absolute;left:0;right:0;bottom:6px;text-align:center;color:#e6edf3;background:rgba(0,0,0,.35);padding:4px 8px;border-radius:8px;margin:0 auto;width:fit-content;opacity:0;transition:opacity .2s}
+
+    /* Footer */
+    .footer{position:absolute;left:0;right:0;bottom:0;height:68px;padding:8px 24px;background:linear-gradient(0deg,rgba(0,0,0,.55),rgba(0,0,0,0));display:flex;align-items:center;justify-content:space-between;z-index:5}
+    .xp{flex:1;height:10px;background:rgba(255,255,255,.15);border-radius:999px;overflow:hidden;margin-right:16px}
+    .xp .fill{height:100%;width:0;background:linear-gradient(90deg,#f2c94c,#ffe083);box-shadow:0 0 12px #f2c94c}
+    .timepill{background:#ffffff22;color:#fff;border:1px solid #ffffff55;padding:8px 12px;border-radius:999px;display:flex;align-items:center;gap:8px}
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="bg" id="bg">
+      <div class="layer" id="bgLayer"></div>
+      <div class="grain"></div>
+    </div>
+
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"></div>
+        <div class="title" id="title">Mensagem no Ultrassom</div>
+      </div>
+      <div class="chapters" id="chapters"></div>
+      <div class="pill" id="ep">Ep. 1/7</div>
+    </div>
+
+    <div class="panel">
+      <div class="chat">
+        <div class="messages">
+          <div class="stream" id="stream"></div>
+          <div class="karaoke" id="karaoke">Detalhes importam.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="xp"><div class="fill" id="xp"></div></div>
+      <div class="timepill"><span>🕖</span><b>19H Diário</b></div>
+    </div>
+  </div>
+
+  <script>
+    const ctx = {
+      started:false,
+      t:0,
+      lastIdx:-1,
+    };
+
+    function buildChapters(total){
+      const wrap = document.getElementById('chapters');
+      wrap.innerHTML='';
+      for(let i=0;i<total;i++){
+        const d=document.createElement('div');
+        d.className='dot';
+        wrap.appendChild(d);
+      }
+    }
+
+    function pulseEpisode(){
+      const el = document.getElementById('ep');
+      el.animate([{transform:'scale(1)'},{transform:'scale(1.04)'},{transform:'scale(1)'}],{duration:600});
+    }
+
+    function addBubble(msg){
+      const s = document.getElementById('stream');
+      const b = document.createElement('div');
+      let cls='bubble';
+      if(msg.type==='text') cls+=' '+(msg.who==='you'?'you':'other');
+      if(msg.type==='system') cls+=' system';
+      if(msg.type==='media') cls+=' media';
+      if(msg.type==='alert') cls+=' system';
+      b.className=cls;
+
+      if(msg.type==='media'){
+        const img=document.createElement('img');
+        img.src= msg.image || 'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240"><rect width="100%" height="100%" fill="black"/><text x="50%" y="50%" fill="white" font-size="22" font-family="Arial" text-anchor="middle">ULTRASSOM</text></svg>`);
+        b.appendChild(img);
+        const ts=document.createElement('div'); ts.className='timestamp'; ts.textContent='10:23'; b.appendChild(ts);
+      } else {
+        b.textContent = msg.text;
+      }
+
+      s.appendChild(b);
+      // pop animation
+      b.animate([{opacity:0, transform:'translateY(6px) scale(.98)'},{opacity:1, transform:'translateY(0) scale(1)'}],{duration:160, easing:'ease-out'});
+
+      // autoscroll
+      const panelHeight = document.querySelector('.messages').clientHeight;
+      const totalHeight = s.scrollHeight;
+      s.style.transform = `translateY(${Math.min(0, panelHeight - totalHeight - 8)}px)`;
+
+      // karaoke short label
+      const k=document.getElementById('karaoke');
+      if(msg.type==='system'){
+        k.textContent = msg.text;
+        k.style.opacity = 1;
+        setTimeout(()=>k.style.opacity=0, 1800);
+      }
+
+      // reactions on reveal
+      if(msg.type==='media' || msg.type==='alert'){
+        const bg = document.getElementById('bg');
+        bg.animate([{filter:'saturate(1.25) contrast(1.1) blur(0px)'},{filter:'saturate(.9) contrast(1.0) blur(3px)'},{filter:'saturate(1.25) contrast(1.1) blur(0px)'}],{duration:600,easing:'ease'});
+        document.querySelector('.chat').animate([{transform:'scale(1)'},{transform:'scale(1.02)'},{transform:'scale(1)'}],{duration:400});
+      }
+    }
+
+    function setTimelineTime(t){
+      ctx.t = t;
+      const data = window.__VIDEO_DATA__ || {durationSec:90,fps:30,messages:[]};
+      if(!ctx.started) return;
+
+      const { durationSec, messages, totalEpisodes } = data;
+      const xp = document.getElementById('xp');
+      const ratio = Math.min(1, t / durationSec);
+      xp.style.width = (ratio * 100) + '%';
+
+      // Chapters glow near end
+      const dots = Array.from(document.querySelectorAll('.dot'));
+      const activeCount = Math.round(ratio * dots.length);
+      dots.forEach((d, i)=>{
+        d.classList.toggle('active', i < activeCount);
+        d.classList.toggle('glow', ratio>0.85 && i < activeCount);
+      });
+
+      if(ratio>0.85 && Math.floor(t*2)%4===0){
+        pulseEpisode();
+      }
+
+      // message schedule every ~1.8s
+      const interval = Math.max(1.5, Math.min(2.5, durationSec / Math.max(1, messages.length+1)));
+      const idx = Math.floor(t / interval) - 1; // show next when passing slot
+      if(idx !== ctx.lastIdx && idx >= 0 && idx < messages.length){
+        ctx.lastIdx = idx;
+        const msg = messages[idx];
+        addBubble(msg);
+        if(idx===0){ // hook
+          document.getElementById('bgLayer').animate([{transform:'scale(1.2)'},{transform:'scale(1.26)'},{transform:'scale(1.2)'}],{duration:700,easing:'ease-out'});
+        }
+        if(idx===messages.length-1){
+          // final hold
+          setTimeout(()=>{}, 1500);
+        }
+      }
+    }
+
+    function startRender(){
+      const data = window.__VIDEO_DATA__;
+      document.getElementById('title').textContent = data.title || 'Mensagem no Ultrassom';
+      document.getElementById('ep').textContent = `Ep. ${data.episode||1}/${data.totalEpisodes||7}`;
+      buildChapters(data.totalEpisodes||7);
+      ctx.started=true;
+    }
+
+    window.startRender = startRender;
+    window.setTimelineTime = setTimelineTime;
+  </script>
+</body>
+</html>
