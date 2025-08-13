@@ -130,7 +130,7 @@ async function generateVideo({ job, title, episode, totalEpisodes, messages, dur
   job.status = 'rendering';
   job.message = 'Launching headless browser';
 
-  const totalFrames = Math.floor(durationSec * fps);
+  // Frame skipping for speed (render every 2nd frame)\n  const frameStep = 2;\n  const totalFrames = Math.floor((durationSec * fps) / frameStep);
   const browser = await puppeteer.launch({
     headless: 'new',
     defaultViewport: { width, height },
@@ -150,14 +150,14 @@ async function generateVideo({ job, title, episode, totalEpisodes, messages, dur
     await new Promise((r)=>setTimeout(r,300));
 
     for (let i = 0; i < totalFrames; i++) {
-      const t = i / fps;
+      const t = (i * frameStep) / fps;
       await page.evaluate((timeSec) => {
         window.setTimelineTime && window.setTimelineTime(timeSec);
       }, t);
 
       const file = path.join(framesPath, `frame_${String(i).padStart(5, '0')}.jpg`);
       await page.screenshot({ path: file, type: 'jpeg', quality: 85 });
-      job.progress = Math.round(((i + 1) / totalFrames) * 80); // 0-80% for frame capture
+      job.progress = Math.round(((i + 1) / totalFrames) * 80);
       job.message = `Captured frame ${i + 1}/${totalFrames}`;
     }
 
