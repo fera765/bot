@@ -8,9 +8,10 @@ input,textarea{width:100%;background:#0b0f14;color:var(--text);border:1px solid 
 button{background:var(--accent);border:0;border-radius:8px;padding:10px 16px;font-weight:700;color:#242424;cursor:pointer}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 #videos .item{display:flex;align-items:center;justify-content:space-between;padding:10px;border-bottom:1px solid #2a313a}
-#videos video{width:320px;height:180px;background:#000;border-radius:8px}
+#videos video{width:216px;height:384px;background:#000;border-radius:8px}
 .actions a{color:var(--accent);margin-left:12px;text-decoration:none}
 .progress{margin-top:10px;padding:10px;background:#0b0f14;border:1px solid #2a313a;border-radius:8px}
 .hidden{display:none}
+.actions-row{display:flex;gap:12px;margin-top:8px}
 @media(max-width:900px){.grid{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.grid{grid-template-columns:1fr}}

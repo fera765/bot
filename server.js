@@ -103,9 +103,9 @@ app.post('/api/generate', async (req, res) => {
     totalEpisodes = 7,
     messages = defaultMessages(),
     durationSec = 90,
-    fps = 30,
-    width = 1920,
-    height = 1080,
+    fps = 24,
+    width = 1080,
+    height = 1920,
   } = req.body || {};
 
   const jobId = nanoid(8);
@@ -155,8 +155,8 @@ async function generateVideo({ job, title, episode, totalEpisodes, messages, dur
         window.setTimelineTime && window.setTimelineTime(timeSec);
       }, t);
 
-      const file = path.join(framesPath, `frame_${String(i).padStart(5, '0')}.png`);
-      await page.screenshot({ path: file });
+      const file = path.join(framesPath, `frame_${String(i).padStart(5, '0')}.jpg`);
+      await page.screenshot({ path: file, type: 'jpeg', quality: 85 });
       job.progress = Math.round(((i + 1) / totalFrames) * 80); // 0-80% for frame capture
       job.message = `Captured frame ${i + 1}/${totalFrames}`;
     }
@@ -166,11 +166,12 @@ async function generateVideo({ job, title, episode, totalEpisodes, messages, dur
 
     await new Promise((resolve, reject) => {
       ffmpeg()
-        .input(path.join(framesPath, 'frame_%05d.png'))
+        .input(path.join(framesPath, 'frame_%05d.jpg'))
         .inputOptions(['-framerate ' + fps])
         .outputOptions([
           '-c:v libx264',
-          '-preset veryfast',
+          '-preset ultrafast',
+          '-crf 23',
           '-pix_fmt yuv420p',
           '-r ' + fps,
         ])

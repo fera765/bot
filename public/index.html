@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gerador de Vídeo 16:9</title>
+  <title>Gerador de Vídeo 9:16</title>
   <link rel="stylesheet" href="/public/styles.css" />
 </head>
 <body>
   <div class="container">
-    <h1>Gerador de Vídeo 16:9 — UI de Chat</h1>
+    <h1>Gerador de Vídeo — UI de Chat (Reels/TikTok/Shorts)</h1>
 
     <section class="card">
       <h2>Novo vídeo</h2>
@@ -24,9 +24,30 @@
             <input type="number" name="totalEpisodes" value="7" min="1" />
           </label>
           <label>Duração (s)
-            <input type="number" name="durationSec" value="90" min="10" max="180" />
+            <input type="number" name="durationSec" value="60" min="10" max="180" />
           </label>
         </div>
+
+        <div class="grid">
+          <label>Preset
+            <select name="preset" id="preset">
+              <option value="tiktok">TikTok/Reels/Shorts (1080x1920, 24fps)</option>
+              <option value="reels30">Reels 30fps (1080x1920, 30fps)</option>
+              <option value="ytshorts">YouTube Shorts (720x1280, 30fps)</option>
+              <option value="custom">Personalizado…</option>
+            </select>
+          </label>
+          <label>Largura
+            <input type="number" name="width" id="width" value="1080" />
+          </label>
+          <label>Altura
+            <input type="number" name="height" id="height" value="1920" />
+          </label>
+          <label>FPS
+            <input type="number" name="fps" id="fps" value="24" />
+          </label>
+        </div>
+
         <label>Mensagens (JSON)
           <textarea name="messages" rows="8">[
   {"type":"text","who":"other","name":"Ava","text":"WE DID IT BABE! I'M PREGNANT!"},
@@ -38,7 +59,10 @@
   {"type":"alert","text":"Continua no Ep. 2…"}
 ]</textarea>
         </label>
-        <button type="submit">Gerar</button>
+        <div class="actions-row">
+          <button type="submit">Gerar</button>
+          <button type="button" id="quick">Gerar Rápido (30s)</button>
+        </div>
       </form>
       <div id="progress" class="progress hidden"></div>
     </section>

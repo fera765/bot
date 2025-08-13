@@ -1,3 +1,12 @@
+function applyPreset(val){
+  const w=document.getElementById('width');
+  const h=document.getElementById('height');
+  const fps=document.getElementById('fps');
+  if(val==='tiktok'){ w.value=1080; h.value=1920; fps.value=24; }
+  if(val==='reels30'){ w.value=1080; h.value=1920; fps.value=30; }
+  if(val==='ytshorts'){ w.value=720; h.value=1280; fps.value=30; }
+}
+
 async function fetchVideos(){
   const res = await fetch('/api/videos');
   const data = await res.json();
@@ -37,12 +46,15 @@ async function poll(jobId){
     el.textContent = `Status: ${data.status} — ${data.progress || 0}% — ${data.message || ''}`;
     if(data.status==='done'){ done=true; }
     if(data.status==='error'){ done=true; alert('Erro: '+data.message); }
-    await new Promise(r=>setTimeout(r,1000));
+    await new Promise(r=>setTimeout(r,800));
   }
   await fetchVideos();
 }
 
 const form = document.getElementById('gen-form');
+const preset = document.getElementById('preset');
+preset.addEventListener('change', ()=> applyPreset(preset.value));
+
 form.addEventListener('submit', async (e)=>{
   e.preventDefault();
   const fd = new FormData(form);
@@ -53,7 +65,27 @@ form.addEventListener('submit', async (e)=>{
     title: fd.get('title'),
     episode: Number(fd.get('episode')), totalEpisodes: Number(fd.get('totalEpisodes')),
     durationSec: Number(fd.get('durationSec')),
-    messages
+    messages,
+    width: Number(fd.get('width')), height: Number(fd.get('height')),
+    fps: Number(fd.get('fps')),
+  };
+  const jobId = await createJob(payload);
+  poll(jobId);
+});
+
+document.getElementById('quick').addEventListener('click', async()=>{
+  applyPreset('tiktok');
+  const payload = {
+    title: 'Mensagem no Ultrassom', episode: 1, totalEpisodes: 7,
+    durationSec: 30, width: 1080, height: 1920, fps: 24,
+    messages: [
+      {type:'text', who:'other', name:'Ava', text:"WE DID IT BABE! I'M PREGNANT!"},
+      {type:'text', who:'you', text:'fr?'},
+      {type:'text', who:'other', name:'Ava', text:"YES! I'm so excited for US 😘"},
+      {type:'system', text:'Detalhes importam.'},
+      {type:'media', who:'other', name:'Ava', image:'', caption:'Ultrassom 10:23'},
+      {type:'alert', text:'Continua no Ep. 2…'},
+    ]
   };
   const jobId = await createJob(payload);
   poll(jobId);
