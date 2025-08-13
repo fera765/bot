@@ -130,7 +130,9 @@ async function generateVideo({ job, title, episode, totalEpisodes, messages, dur
   job.status = 'rendering';
   job.message = 'Launching headless browser';
 
-  // Frame skipping for speed (render every 2nd frame)\n  const frameStep = 2;\n  const totalFrames = Math.floor((durationSec * fps) / frameStep);
+  // Frame skipping for speed (render every 2nd frame)
+  const frameStep = 2;
+  const totalFrames = Math.floor((durationSec * fps) / frameStep);
   const browser = await puppeteer.launch({
     headless: 'new',
     defaultViewport: { width, height },
