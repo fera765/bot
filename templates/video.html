@@ -13,7 +13,7 @@
     .theme-aqua{ --cyan:#5eead4; --panel:#0b1b1fcc; }
     .theme-violet{ --cyan:#c084fc; --panel:#1b0b1fcc; }
     html,body{margin:0;height:100%;overflow:hidden;background:#000;color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',sans-serif}
-    .stage{position:relative;width:100vw;height:100vh;background:#000}
+    .stage{position:relative;width:100vw;height:100vh;background:#00b140}
 
     /* Dynamic background */
     .bg{position:absolute;inset:0;overflow:hidden;filter:saturate(1.15) contrast(1.05)}
@@ -46,11 +46,7 @@
 </head>
 <body>
   <div class="stage" id="stage">
-    <div class="bg" id="bg">
-      <video id="bgVideo" muted loop playsinline></video>
-      <div class="layer" id="bgLayer"></div>
-      <div class="grain"></div>
-    </div>
+    <div class="bg" id="bg" style="display:none;"></div>
 
     <div class="topbar">
       <div class="pill" id="ep">Ep. 1/7</div>
@@ -186,15 +182,6 @@
       const stage = document.getElementById('stage');
       stage.classList.remove('theme-sunset','theme-aqua','theme-violet');
       stage.classList.add('theme-'+(data.theme||'sunset'));
-      // set background video if provided (server passes path or URL)
-      const bgV = document.getElementById('bgVideo');
-      if (data.backgroundUrl) {
-        bgV.src = data.backgroundUrl;
-        bgV.style.display = 'block';
-        bgV.play().catch(()=>{});
-      } else {
-        bgV.style.display = 'none';
-      }
       ctx.started=true;
     }
 

@@ -182,7 +182,7 @@ async function generateVideo({ job, title, episode, totalEpisodes, messages, dur
   job.status = 'rendering';
   job.message = 'Launching headless browser';
 
-  const frameStep = 3; // even mais rápido: captura a cada 3 frames (20fps de captura), saída mantém 60fps
+  const frameStep = 2; // melhor qualidade mantendo boa velocidade
   const totalFrames = Math.floor((durationSec * fps) / frameStep);
   const browser = await puppeteer.launch({
     headless: 'new',
@@ -195,14 +195,10 @@ async function generateVideo({ job, title, episode, totalEpisodes, messages, dur
     const page = await browser.newPage();
     await page.goto('file://' + path.join(__dirname, 'templates', 'video.html'));
 
-    const bgPromise = ensureBackgroundVideo(backgroundUrl, width, height).catch(()=>null);
-
-    // Wait for background to be ready so the in-page preview uses it during frame capture
-    bgVideo = await bgPromise;
-
+    // Ignora background externo: usamos verde sólido no template
     await page.evaluate((data) => {
       window.__VIDEO_DATA__ = data;
-    }, { title, episode, totalEpisodes, messages, durationSec, fps, width, height, theme, messageDelay, backgroundUrl: bgVideo || '' });
+    }, { title, episode, totalEpisodes, messages, durationSec, fps, width, height, theme, messageDelay });
 
     await page.evaluate(() => window.startRender && window.startRender());
     await new Promise((r)=>setTimeout(r,300));
@@ -232,18 +228,7 @@ async function generateVideo({ job, title, episode, totalEpisodes, messages, dur
           '-pix_fmt yuv420p',
           '-r ' + fps,
         ]);
-      if (bgVideo) {
-        // Overlay frames on background video (bgVideo may be returned as URL path)
-        const bgPath = bgVideo.startsWith('/') ? path.join(__dirname, bgVideo) : bgVideo;
-        command
-          .input(bgPath)
-          .complexFilter([
-            '[1:v]scale='+width+':'+height+':force_original_aspect_ratio=cover,setsar=1[bg]',
-            '[0:v]setpts=PTS-STARTPTS[fg]',
-            '[bg][fg]overlay=(W-w)/2:(H-h)/2:shortest=1[outv]'
-          ], 'outv')
-          .map('outv');
-      }
+      // Sem overlay: background já é sólido no template
       command
         .on('progress', (p) => {
           if (p.percent) job.progress = 85 + Math.min(10, Math.round(p.percent / 10));
