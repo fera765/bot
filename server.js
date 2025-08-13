@@ -7,7 +7,7 @@ import ffmpegPath from 'ffmpeg-static';
 import ffmpeg from 'fluent-ffmpeg';
 import { nanoid } from 'nanoid';
 import puppeteer from 'puppeteer';
-import ytdlp from 'yt-dlp-exec';
+
 ffmpeg.setFfmpegPath(ffmpegPath);
 
 const __filename = fileURLToPath(import.meta.url);
@@ -65,7 +65,7 @@ app.post('/api/backgrounds/download', async (req, res) => {
   try{
     const id = nanoid(6);
     const out = path.join(bgDir, `${id}.mp4`);
-    await ytdlp(url, { output: out, noCheckCertificates: true, noWarnings: true, preferFreeFormats: true, format: 'mp4/bestaudio/best' });
+    await new Promise((resolve,reject)=>{ ffmpeg(url).outputOptions(['-c copy']).on('error',reject).on('end',resolve).save(out); });
     res.json({file: path.basename(out), url: `/backgrounds/${path.basename(out)}`});
   }catch(err){
     res.status(500).json({error:String(err?.stderr || err?.message || err)});
@@ -153,28 +153,36 @@ app.post('/api/generate', async (req, res) => {
 
 async function ensureBackgroundVideo(backgroundUrl, width, height) {
   if(!backgroundUrl) return null;
-  if(backgroundUrl.startsWith('/backgrounds/')) return path.join(__dirname, backgroundUrl);
-  const id = nanoid(6);
-  const out = path.join(bgDir, `${id}.mp4`);
-  await ytdlp(backgroundUrl, { output: out, noCheckCertificates: true, noWarnings: true, preferFreeFormats: true, format: 'mp4/bestaudio/best' });
+  let localPath;
+  if(backgroundUrl.startsWith('/backgrounds/')) {
+    localPath = path.join(__dirname, backgroundUrl);
+  } else {
+    const id = nanoid(6);
+    const out = path.join(bgDir, `${id}.mp4`);
+    await new Promise((resolve,reject)=>{ ffmpeg(backgroundUrl).outputOptions(['-c copy']).on('error',reject).on('end',resolve).save(out); });
+    localPath = out;
+  }
   // scale/crop to canvas
-  const scaled = path.join(bgDir, `${id}-scaled.mp4`);
-  await new Promise((resolve,reject)=>{
-    ffmpeg(out)
-      .videoFilters([`scale=w=${width}:h=${height}:force_original_aspect_ratio=cover,setsar=1`])
-      .outputOptions(['-c:v libx264','-preset ultrafast','-crf 23','-pix_fmt yuv420p'])
-      .on('error',reject)
-      .on('end',resolve)
-      .save(scaled);
-  });
-  return scaled;
+  const basename = path.basename(localPath, path.extname(localPath));
+  const scaled = path.join(bgDir, `${basename}-scaled.mp4`);
+  if (!fs.existsSync(scaled)) {
+    await new Promise((resolve,reject)=>{
+      ffmpeg(localPath)
+        .videoFilters([`scale=w=${width}:h=${height}:force_original_aspect_ratio=cover,setsar=1`])
+        .outputOptions(['-c:v libx264','-preset ultrafast','-crf 23','-pix_fmt yuv420p'])
+        .on('error',reject)
+        .on('end',resolve)
+        .save(scaled);
+    });
+  }
+  return `/backgrounds/${path.basename(scaled)}`;
 }
 
 async function generateVideo({ job, title, episode, totalEpisodes, messages, durationSec, fps, width, height, framesPath, outFile, backgroundUrl, theme, messageDelay }) {
   job.status = 'rendering';
   job.message = 'Launching headless browser';
 
-  const frameStep = 2; // even at 60fps capture every 2nd frame -> 30fps effective input, output still 60fps
+  const frameStep = 3; // even mais rápido: captura a cada 3 frames (20fps de captura), saída mantém 60fps
   const totalFrames = Math.floor((durationSec * fps) / frameStep);
   const browser = await puppeteer.launch({
     headless: 'new',
@@ -189,14 +197,15 @@ async function generateVideo({ job, title, episode, totalEpisodes, messages, dur
 
     const bgPromise = ensureBackgroundVideo(backgroundUrl, width, height).catch(()=>null);
 
+    // Wait for background to be ready so the in-page preview uses it during frame capture
+    bgVideo = await bgPromise;
+
     await page.evaluate((data) => {
       window.__VIDEO_DATA__ = data;
-    }, { title, episode, totalEpisodes, messages, durationSec, fps, width, height, theme, messageDelay });
+    }, { title, episode, totalEpisodes, messages, durationSec, fps, width, height, theme, messageDelay, backgroundUrl: bgVideo || '' });
 
     await page.evaluate(() => window.startRender && window.startRender());
     await new Promise((r)=>setTimeout(r,300));
-
-    bgVideo = await bgPromise;
 
     for (let i = 0; i < totalFrames; i++) {
       const t = (i * frameStep) / fps;
@@ -224,9 +233,10 @@ async function generateVideo({ job, title, episode, totalEpisodes, messages, dur
           '-r ' + fps,
         ]);
       if (bgVideo) {
-        // Overlay frames on background video
+        // Overlay frames on background video (bgVideo may be returned as URL path)
+        const bgPath = bgVideo.startsWith('/') ? path.join(__dirname, bgVideo) : bgVideo;
         command
-          .input(bgVideo)
+          .input(bgPath)
           .complexFilter([
             '[1:v]scale='+width+':'+height+':force_original_aspect_ratio=cover,setsar=1[bg]',
             '[0:v]setpts=PTS-STARTPTS[fg]',

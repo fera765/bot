@@ -16,7 +16,8 @@
     .stage{position:relative;width:100vw;height:100vh;background:#000}
 
     /* Dynamic background */
-    .bg{position:absolute;inset:0;overflow:hidden;filter:saturate(1.25) contrast(1.1)}
+    .bg{position:absolute;inset:0;overflow:hidden;filter:saturate(1.15) contrast(1.05)}
+    .bg video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.95}
     .bg .layer{position:absolute;inset:-10%;background:conic-gradient(from 90deg at 30% 50%, #6ee7b7, #fde047, #60a5fa, #f472b6, #6ee7b7);animation:spin 30s linear infinite}
     .grain{position:absolute;inset:0;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="n"><feTurbulence baseFrequency="0.8" numOctaves="2"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity=".04"/></svg>');mix-blend-mode:overlay}
     @keyframes spin{0%{transform:scale(1.2) rotate(0)}100%{transform:scale(1.2) rotate(360deg)}}
@@ -46,6 +47,7 @@
 <body>
   <div class="stage" id="stage">
     <div class="bg" id="bg">
+      <video id="bgVideo" muted loop playsinline></video>
       <div class="layer" id="bgLayer"></div>
       <div class="grain"></div>
     </div>
@@ -184,6 +186,15 @@
       const stage = document.getElementById('stage');
       stage.classList.remove('theme-sunset','theme-aqua','theme-violet');
       stage.classList.add('theme-'+(data.theme||'sunset'));
+      // set background video if provided (server passes path or URL)
+      const bgV = document.getElementById('bgVideo');
+      if (data.backgroundUrl) {
+        bgV.src = data.backgroundUrl;
+        bgV.style.display = 'block';
+        bgV.play().catch(()=>{});
+      } else {
+        bgV.style.display = 'none';
+      }
       ctx.started=true;
     }
 
