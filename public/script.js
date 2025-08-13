@@ -8,7 +8,7 @@ function applyPreset(val){
 }
 
 async function fetchVideos(){
-  const res = await fetch('/api/videos');
+  const res = await fetch('/api/videos?t=' + Date.now());
   const data = await res.json();
   const wrap = document.getElementById('videos');
   wrap.innerHTML = '';
@@ -24,9 +24,9 @@ async function fetchVideos(){
         <strong>${f.filename}</strong>
         <div class="muted">${(f.size/1e6).toFixed(2)} MB</div>
       </div>
-      <video controls src="${f.url}"></video>
+      <video controls src="${f.url}?t=${Date.now()}"></video>
       <div class="actions">
-        <a href="${f.url}" target="_blank">Abrir</a>
+        <a href="${f.url}?t=${Date.now()}" target="_blank">Abrir</a>
         <a href="${f.download}">Baixar</a>
       </div>
     `;
@@ -64,12 +64,18 @@ async function poll(jobId){
   }
   await fetchVideos();
   // force reload <video> elements to avoid caching
-  document.querySelectorAll('#videos video').forEach(v=>{ v.src = v.src + (v.src.includes('?')?'&':'?') + 't=' + Date.now(); });
+  document.querySelectorAll('#videos video').forEach(v=>{ v.src = v.src.split('?')[0] + '?t=' + Date.now(); });
 }
 
 const form = document.getElementById('gen-form');
 const preset = document.getElementById('preset');
 preset.addEventListener('change', ()=> applyPreset(preset.value));
+
+afterVisibilityRefresh();
+function afterVisibilityRefresh(){
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ fetchVideos(); }});
+  setInterval(fetchVideos, 10000);
+}
 
 form.addEventListener('submit', async (e)=>{
   e.preventDefault();
