@@ -56,23 +56,170 @@
 2025-08-13T02:28:37Z INF Retrying connection in up to 1m4s connIndex=0 event=0 ip=198.41.192.77
 2025-08-13T02:28:45Z ERR Connection terminated error="context canceled" connIndex=0
 2025-08-13T02:29:57Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.192.77
-2025-08-13T02:29:57Z ERR Failed to serve tunnel connection error="context canceled" connIndex=0 event=0 ip=198.41.192.77
-2025-08-13T02:29:57Z INF Retrying connection in up to 1m4s connIndex=0 event=0 ip=198.41.192.77
-2025-08-13T02:30:04Z ERR Connection terminated error="context canceled" connIndex=0
-onnIndex=0 event=0 ip=198.41.192.7
-2025-08-13T02:25:48Z ERR Connection terminated error="context canceled" connIndex=0
-2025-08-13T02:28:02Z INF Tunnel connection curv2025-08-13T02:30:22Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.200.13
-2025-08-13T02:30:22Z ERR Failed to serve tunnel connection error="context canceled" connIndex=0 event=0 ip=198.41.200.13
-2025-08-13T02:30:22Z INF Retrying connection in up to 1m4s connIndex=0 event=0 ip=198.41.200.13
-2025-08-13T02:30:32Z ERR Connection terminated error="context canceled" connIndex=0
-2025-08-13T02:31:06Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.200.13
-2025-08-13T02:31:06Z ERR Failed to serve tunnel connection error="context canceled" connIndex=0 event=0 ip=198.41.200.13
-2025-08-13T02:31:06Z INF Retrying connection in up to 1m4s connIndex=0 event=0 ip=198.41.200.13
-2025-08-13T02:31:24Z ERR Connec2025-08-13T02:31:53Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.192.7
-2025-08-13T02:31:53Z ERR Failed to serve tunnel connection error="context canceled" connIndex=0 event=0 ip=198.41.192.7
-2025-08-13T02:31:53Z INF Retrying connection in up to 1m4s connIndex=0 event=0 ip=198.41.192.7
-2025-08-13T02:32:11Z ERR Connection terminated error="context canceled" connIndex=0
-2025-08-13T02:32:32Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.192.7
-2025-08-13T02:32:32Z ERR Failed to serve tunnel connection error="context canceled" connIndex=0 event=0 ip=198.41.192.7
-2025-08-13T02:32:32Z INF Retrying connection in up to 1m4s connIndex=0 event=0 ip=198.41.192.7
-2025-08-13T02:32:58Z ERR Connection terminated error="context canceled" connIndex=0
+2025-08-13T02:29:57Z ERR2025-08-13T02:33:20Z ERR  error="stream 1821 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:33:20Z ERR Request failed error="stream 1821 canceled by remote with error code 0" connIndex=0 dest=https://fi2025-08-13T02:33:48Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.192.77
+2025-08-13T02:33:48Z ERR Failed to serve tunnel connection error="context canceled" connIndex=0 event=0 ip=198.41.192.77
+2025-08-13T02:33:48Z INF Retrying connection in up to 1m4s connIndex=0 event=0 ip=198.41.192.77
+2025-08-13T02:33:55Z ERR Connection terminated error="context canceled" connIndex=0
+2025-08-13T02:36:20Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.192.77
+2025-08-13T02:36:20Z ERR Failed to serve tunnel connection error="context canceled" connIndex=0 event=0 ip=198.41.192.77
+2025-08-13T02:36:20Z INF Retrying connection in up to 1m4s connIndex=0 event=0 ip=198.41.192.77
+2025-08-13T02:36:38Z ERR Connection terminated error="context canceled" connIndex=0
+2025-08-13T02:41:35Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.192.77
+2025-08-13T02:41:35Z ERR Failed to serve tunnel connection error="context canceled" connIndex=0 event=0 ip=198.41.192.77
+2025-08-13T02:41:35Z INF Retrying connection in up to 1m4s connIndex=0 event=0 ip=198.41.192.77
+2025-08-13T02:42:03Z ERR Connection terminated error="context canceled" connIndex=0
+2025-08-13T02:45:59Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.192.77
+2025-08-13T02:45:59Z ERR Failed to serve tunnel connection error="context canceled" connIndex=0 event=0 ip=198.41.192.77
+2025-08-13T02:45:59Z INF Retrying connection in up to 1m4s connIndex=0 event=0 ip=198.41.192.77
+2025-08-13T02:46:27Z ERR Connection terminated error="context canceled" connIndex=0
+2025-08-13T02:48:24Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.192.77
+2025-08-13T02:48:24Z ERR Failed to serve tunnel connection error="context canceled" connIndex=0 event=0 ip=198.41.192.77
+2025-08-13T02:48:24Z INF Retrying connection in up to 1m4s connIndex=0 event=0 ip=198.41.192.77
+2025-08-13T02:48:42Z ERR Connection terminated error="context canceled" connIndex=0
+2025-08-13T02:49:51Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.192.77
+2025-08-13T02:49:51Z ERR Failed to serve tunnel connection error="context canceled" connIndex=0 event=0 ip=198.41.192.77
+2025-08-13T02:49:51Z INF Retrying connection in up to 1m4s connIndex=0 event=0 ip=198.41.192.77
+2025-08-13T02:49:59Z ERR Connection terminated error="context canceled" connIndex=0
+42:31Z INF Retrying connection in up to 1m4s connIndex=0 event=0 ip=198.41.200.13
+2025-08-13T02:43:02Z ERR Connection terminated error="context canceled" connIndex=0
+2025-08-13T02:43:18Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.200.13
+2025-08-13T02:43:18Z ERR Failed to serve tunnel connection error="context canceled" connIndex=0 event=0 ip=198.41.200.13
+2025-08-13T02:43:18Z INF Retrying connection in up to 1m4s connIndex=0 event=0 ip=198.41.200.13
+2025-08-13T02:432025-08-13T02:44:55Z INF Tunnel connection curve preferences: [X25512025-08-13T02:47:41Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.200.13
+2025-08-13T02:47:41Z ERR Failed to serve tunnel connection error="context canceled" connIndex=0 event=0 ip=198.41.200.13
+2025-08-13T02:47:41Z INF Retrying connection in up to 1m4s connIndex=0 event=0 ip=198.41.200.13
+2025-08-13T022025-08-13T02:50:05Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.192.7
+2025-08-13T02:50:05Z ERR Failed to serve tunnel connection error="context canceled" connIndex=0 event=0 ip=198.41.192.7
+2025-08-13T02:50:05Z INF Retrying connection in up to 1m4s connIndex=0 event=0 ip=198.41.192.7
+" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/z3LlOWlS.mp4?t=1755052469483 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:34:30Z ERR  error="stream 2657 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:34:30Z ERR Request failed error="stream 2657 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/hqJp-ooZ.mp4?t=1755052469492 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:34:30Z ERR  error="stream 2641 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:34:30Z ERR Request failed error="stream 2641 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052469479 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:34:31Z ERR  error="stream 2721 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:34:31Z ERR Request failed error="stream 2721 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/z3LlOWlS.mp4?t=1755052469483 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:34:31Z ERR  error="stream 2717 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:34:31Z ERR Request failed error="stream 2717 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/UEaB8uoi.mp4?t=1755052469486 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:34:31Z ERR  error="stream 2713 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:34:31Z ERR Request failed error="stream 2713 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052469479 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:34:40Z ERR  error="stream 2761 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:34:40Z ERR Request failed error="stream 2761 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052479485 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:34:40Z ERR  error="stream 2777 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:34:40Z ERR Request failed error="stream 2777 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/cS5-UWmE.mp4?t=1755052479495 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:34:42Z ERR  error="stream 2841 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:34:42Z ERR Request failed error="stream 2841 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052479485 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:34:50Z ERR  error="stream 2881 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:34:50Z ERR Request failed error="stream 2881 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052489475 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:34:51Z ERR  error="stream 2957 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:34:51Z ERR Request failed error="stream 2957 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/cS5-UWmE.mp4?t=1755052489486 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:00Z ERR  error="stream 3005 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:00Z ERR Request failed error="stream 3005 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052499571 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:00Z ERR  error="stream 3009 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:00Z ERR Request failed error="stream 3009 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/z3LlOWlS.mp4?t=1755052499574 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:01Z ERR  error="stream 3069 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:01Z ERR Request failed error="stream 3069 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/cS5-UWmE.mp4?t=1755052499580 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:01Z ERR  error="stream 3073 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:01Z ERR Request failed error="stream 3073 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/UEaB8uoi.mp4?t=1755052499577 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:02Z ERR  error="stream 3081 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:02Z ERR Request failed error="stream 3081 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/z3LlOWlS.mp4?t=1755052499574 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:10Z ERR  error="stream 3133 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:10Z ERR Request failed error="stream 3133 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052509539 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:11Z ERR  error="stream 3189 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:11Z ERR Request failed error="stream 3189 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052509539 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:20Z ERR  error="stream 3245 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:20Z ERR Request failed error="stream 3245 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052519510 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:21Z ERR  error="stream 3317 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:21Z ERR Request failed error="stream 3317 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/UEaB8uoi.mp4?t=1755052519523 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:23Z ERR  error="stream 3325 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:23Z ERR Request failed error="stream 3325 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052519510 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:24Z ERR  error="stream 3349 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:24Z ERR Request failed error="stream 3349 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052519510 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:30Z ERR  error="stream 3377 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:30Z ERR Request failed error="stream 3377 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052529546 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:30Z ERR  error="stream 3389 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:30Z ERR Request failed error="stream 3389 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/hqJp-ooZ.mp4?t=1755052529562 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:31Z ERR  error="stream 3445 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:31Z ERR Request failed error="stream 3445 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/cS5-UWmE.mp4?t=1755052529558 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:40Z ERR  error="stream 3497 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:40Z ERR Request failed error="stream 3497 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052539746 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:40Z ERR  error="stream 3501 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:40Z ERR Request failed error="stream 3501 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/z3LlOWlS.mp4?t=1755052539909 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:42Z ERR  error="stream 3573 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:42Z ERR Request failed error="stream 3573 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/cS5-UWmE.mp4?t=1755052539915 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:51Z ERR  error="stream 3697 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:51Z ERR Request failed error="stream 3697 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/UEaB8uoi.mp4?t=1755052549567 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:35:51Z ERR  error="stream 3701 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:35:51Z ERR Request failed error="stream 3701 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052549562 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:00Z ERR  error="stream 3741 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:00Z ERR Request failed error="stream 3741 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052559480 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:01Z ERR  error="stream 3817 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:01Z ERR Request failed error="stream 3817 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/UEaB8uoi.mp4?t=1755052559487 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:10Z ERR  error="stream 3861 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:10Z ERR Request failed error="stream 3861 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052569580 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:11Z ERR  error="stream 3925 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:11Z ERR Request failed error="stream 3925 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052569580 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:20Z ERR  error="stream 3981 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:20Z ERR Request failed error="stream 3981 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052579493 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:22Z ERR  error="stream 4077 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:22Z ERR Request failed error="stream 4077 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052579493 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:31Z ERR  error="stream 4177 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:31Z ERR Request failed error="stream 4177 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/UEaB8uoi.mp4?t=1755052589587 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:32Z ERR  error="stream 4185 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:32Z ERR Request failed error="stream 4185 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052589578 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:41Z ERR  error="stream 4301 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:41Z ERR Request failed error="stream 4301 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/UEaB8uoi.mp4?t=1755052599567 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:43Z ERR  error="stream 4317 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:43Z ERR Request failed error="stream 4317 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052599561 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:50Z ERR  error="stream 4385 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:50Z ERR Request failed error="stream 4385 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052609833 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:50Z ERR  error="stream 4377 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:50Z ERR Request failed error="stream 4377 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/QfSPExJ_.mp4?t=1755052609829 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:50Z ERR  error="stream 4417 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:50Z ERR Request failed error="stream 4417 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/QfSPExJ_.mp4?t=1755052609130 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:51Z ERR  error="stream 4441 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:51Z ERR Request failed error="stream 4441 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/UEaB8uoi.mp4?t=1755052609838 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:51Z ERR  error="stream 4465 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:51Z ERR Request failed error="stream 4465 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052609131 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:51Z ERR  error="stream 4469 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:51Z ERR Request failed error="stream 4469 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/z3LlOWlS.mp4?t=1755052609132 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:51Z ERR  error="stream 4473 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:51Z ERR Request failed error="stream 4473 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/UEaB8uoi.mp4?t=1755052609132 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:51Z ERR  error="stream 4477 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:51Z ERR Request failed error="stream 4477 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/cS5-UWmE.mp4?t=1755052609132 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:51Z ERR  error="stream 4489 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:51Z ERR Request failed error="stream 4489 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/QfSPExJ_.mp4?t=1755052609829 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:51Z ERR  error="stream 4517 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:51Z ERR Request failed error="stream 4517 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/z3LlOWlS.mp4?t=1755052609836 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:36:51Z ERR  error="stream 4505 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:36:51Z ERR Request failed error="stream 4505 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052609833 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:37:00Z ERR  error="stream 4541 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:37:00Z ERR Request failed error="stream 4541 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/QfSPExJ_.mp4?t=1755052619654 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:37:00Z ERR  error="stream 4537 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:37:00Z ERR Request failed error="stream 4537 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052619657 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:37:01Z ERR  error="stream 4613 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:37:01Z ERR Request failed error="stream 4613 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/UEaB8uoi.mp4?t=1755052619664 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:37:01Z ERR  error="stream 4625 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:37:01Z ERR Request failed error="stream 4625 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/z3LlOWlS.mp4?t=1755052619661 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:37:10Z ERR  error="stream 4697 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:37:10Z ERR Request failed error="stream 4697 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/QfSPExJ_.mp4?t=1755052629607 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:37:12Z ERR  error="stream 4785 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:37:12Z ERR Request failed error="stream 4785 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052629635 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:37:29Z ERR  error="stream 4825 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:37:29Z ERR Request failed error="stream 4825 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/QfSPExJ_.mp4?t=1755052648532 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:37:29Z ERR  error="stream 4829 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:37:29Z ERR Request failed error="stream 4829 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052648539 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:37:30Z ERR  error="stream 4853 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:37:30Z ERR Request failed error="stream 4853 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/QfSPExJ_.mp4?t=1755052648532 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:37:40Z ERR  error="stream 4949 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:37:40Z ERR Request failed error="stream 4949 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/QfSPExJ_.mp4?t=1755052658673 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:37:40Z ERR  error="stream 4957 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:37:40Z ERR Request failed error="stream 4957 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052658678 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:37:40Z ERR  error="stream 4961 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:37:40Z ERR Request failed error="stream 4961 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/cS5-UWmE.mp4?t=1755052658722 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:37:40Z ERR  error="stream 4993 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:37:40Z ERR Request failed error="stream 4993 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/QfSPExJ_.mp4?t=1755052658673 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:37:40Z ERR  error="stream 5009 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:37:40Z ERR Request failed error="stream 5009 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/n957fRKj.mp4?t=1755052658678 event=0 ip=198.41.200.233 type=http
+2025-08-13T02:37:41Z ERR  error="stream 5025 canceled by remote with error code 0" connIndex=0 event=1 ingressRule=0 originService=http://localhost:5000
+2025-08-13T02:37:41Z ERR Request failed error="stream 5025 canceled by remote with error code 0" connIndex=0 dest=https://fiscal-jerry-wayne-isa.trycloudflare.com/videos/z3LlOWlS.mp4?t=1755052658704 event=0 ip=198.41.200.233 type=http
