@@ -73,6 +73,7 @@ app.post('/api/backgrounds/download', async (req, res) => {
 });
 
 app.get('/api/videos', (req, res) => {
+  res.set('Cache-Control','no-store');
   const files = fs
     .readdirSync(videosDir)
     .filter((f) => f.endsWith('.mp4'))

@@ -12,6 +12,10 @@ async function fetchVideos(){
   const data = await res.json();
   const wrap = document.getElementById('videos');
   wrap.innerHTML = '';
+  if(!data.files || !data.files.length){
+    wrap.innerHTML = '<div class="muted">Nenhum vídeo gerado ainda.</div>';
+    return;
+  }
   for(const f of data.files){
     const div = document.createElement('div');
     div.className = 'item';
@@ -59,6 +63,8 @@ async function poll(jobId){
     await new Promise(r=>setTimeout(r,800));
   }
   await fetchVideos();
+  // force reload <video> elements to avoid caching
+  document.querySelectorAll('#videos video').forEach(v=>{ v.src = v.src + (v.src.includes('?')?'&':'?') + 't=' + Date.now(); });
 }
 
 const form = document.getElementById('gen-form');
