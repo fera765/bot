@@ -158,8 +158,15 @@
         ctx.lastIdx = idx;
         const msg = messages[idx];
         addBubble(msg);
-              if(idx===0){ // hook
-        document.getElementById('bgLayer').animate([{transform:'scale(1.2)'},{transform:'scale(1.26)'},{transform:'scale(1.2)'}],{duration:700,easing:'ease-out'});
+      if(idx===0){
+        const target = document.getElementById('stage');
+        if (target && target.animate) {
+          target.animate([
+            {transform:'scale(1.0)'},
+            {transform:'scale(1.03)'},
+            {transform:'scale(1.0)'}
+          ],{duration:600,easing:'ease-out'});
+        }
       }
       // safeguard autoscroll update after layout
       setTimeout(()=>{
