@@ -182,7 +182,7 @@ async function generateVideo({ job, title, episode, totalEpisodes, messages, dur
   job.status = 'rendering';
   job.message = 'Launching headless browser';
 
-  const frameStep = 2; // melhor qualidade mantendo boa velocidade
+  const frameStep = 4; // máxima velocidade: captura 1 a cada 4 frames (15fps de captura), saída 60fps
   const totalFrames = Math.floor((durationSec * fps) / frameStep);
   const browser = await puppeteer.launch({
     headless: 'new',
@@ -201,7 +201,7 @@ async function generateVideo({ job, title, episode, totalEpisodes, messages, dur
     }, { title, episode, totalEpisodes, messages, durationSec, fps, width, height, theme, messageDelay });
 
     await page.evaluate(() => window.startRender && window.startRender());
-    await new Promise((r)=>setTimeout(r,300));
+    await new Promise((r)=>setTimeout(r,120));
 
     for (let i = 0; i < totalFrames; i++) {
       const t = (i * frameStep) / fps;
@@ -210,7 +210,7 @@ async function generateVideo({ job, title, episode, totalEpisodes, messages, dur
       }, t);
 
       const file = path.join(framesPath, `frame_${String(i).padStart(5, '0')}.jpg`);
-      await page.screenshot({ path: file, type: 'jpeg', quality: 85 });
+      await page.screenshot({ path: file, type: 'jpeg', quality: 80 });
       job.progress = Math.round(((i + 1) / totalFrames) * 80);
       job.message = `Captured frame ${i + 1}/${totalFrames}`;
     }
@@ -224,7 +224,7 @@ async function generateVideo({ job, title, episode, totalEpisodes, messages, dur
         .outputOptions([
           '-c:v libx264',
           '-preset ultrafast',
-          '-crf 23',
+          '-crf 26',
           '-pix_fmt yuv420p',
           '-r ' + fps,
         ]);
