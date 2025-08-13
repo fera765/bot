@@ -23,7 +23,7 @@
 
     /* Chat panel */
     .panel{position:absolute;top:calc(50% - 300px);left:0;right:0;display:flex;justify-content:center;align-items:flex-start;z-index:6}
-    .chat{position:relative;width:min(760px,88vw);max-height:400px;background:var(--panel);backdrop-filter:blur(12px);border-radius:24px;border:1px solid rgba(255,255,255,.08);padding:22px;display:flex;flex-direction:column}
+    .chat{position:relative;width:min(760px,88vw);height:400px;max-height:400px;background:var(--panel);backdrop-filter:blur(12px);border-radius:24px;border:1px solid rgba(255,255,255,.08);padding:22px;display:flex;flex-direction:column}
     .messages{flex:1;overflow:hidden;position:relative}
     .stream{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;gap:12px}
     .bubble{max-width:85%;padding:18px 20px;border-radius:20px;font-size:22px;line-height:1.42;color:#0b0f14;box-shadow:0 6px 26px rgba(0,0,0,.22)}
@@ -109,7 +109,8 @@
       // autoscroll
       const panelHeight = document.querySelector('.messages').clientHeight;
       const totalHeight = s.scrollHeight;
-      s.style.transform = `translateY(${Math.min(0, panelHeight - totalHeight - 8)}px)`;
+      const offset = Math.min(0, panelHeight - totalHeight - 8);
+      s.style.transform = `translateY(${offset}px)`;
 
       // karaoke short label
       const k=document.getElementById('karaoke');
@@ -150,14 +151,22 @@
 
       // message schedule every ~1.8s
       const interval = Math.max(1.3, Math.min(2.1, durationSec / Math.max(1, messages.length+1)));
-      const idx = Math.floor(t / interval) - 1; // show next when passing slot
+      const idx = Math.floor(t / interval); // show next when entering slot
       if(idx !== ctx.lastIdx && idx >= 0 && idx < messages.length){
         ctx.lastIdx = idx;
         const msg = messages[idx];
         addBubble(msg);
-        if(idx===0){ // hook
-          document.getElementById('bgLayer').animate([{transform:'scale(1.2)'},{transform:'scale(1.26)'},{transform:'scale(1.2)'}],{duration:700,easing:'ease-out'});
-        }
+              if(idx===0){ // hook
+        document.getElementById('bgLayer').animate([{transform:'scale(1.2)'},{transform:'scale(1.26)'},{transform:'scale(1.2)'}],{duration:700,easing:'ease-out'});
+      }
+      // safeguard autoscroll update after layout
+      setTimeout(()=>{
+        const s = document.getElementById('stream');
+        const panelHeight = document.querySelector('.messages').clientHeight;
+        const totalHeight = s.scrollHeight;
+        const offset = Math.min(0, panelHeight - totalHeight - 8);
+        s.style.transform = `translateY(${offset}px)`;
+      }, 50);
         if(idx===messages.length-1){
           // final hold
           setTimeout(()=>{}, 1500);
