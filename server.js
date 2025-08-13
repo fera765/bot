@@ -7,6 +7,7 @@ import ffmpegPath from 'ffmpeg-static';
 import ffmpeg from 'fluent-ffmpeg';
 import { nanoid } from 'nanoid';
 import puppeteer from 'puppeteer';
+import ytdlp from 'yt-dlp-exec';
 ffmpeg.setFfmpegPath(ffmpegPath);
 
 const __filename = fileURLToPath(import.meta.url);
@@ -20,8 +21,9 @@ const dataDir = path.join(__dirname, 'data');
 const videosDir = path.join(dataDir, 'videos');
 const framesDir = path.join(dataDir, 'frames');
 const uploadsDir = path.join(dataDir, 'uploads');
+const bgDir = path.join(dataDir, 'backgrounds');
 
-for (const d of [dataDir, videosDir, framesDir, uploadsDir]) {
+for (const d of [dataDir, videosDir, framesDir, uploadsDir, bgDir]) {
   if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
 }
 
@@ -29,8 +31,9 @@ for (const d of [dataDir, videosDir, framesDir, uploadsDir]) {
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/videos', express.static(videosDir));
 app.use('/uploads', express.static(uploadsDir));
+app.use('/backgrounds', express.static(bgDir));
 
-app.use(express.json({ limit: '5mb' }));
+app.use(express.json({ limit: '10mb' }));
 
 // Multer for optional uploads
 const storage = multer.diskStorage({
@@ -49,6 +52,24 @@ const jobs = new Map();
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/api/backgrounds', (req, res) => {
+  const files = fs.readdirSync(bgDir).filter(f=>/\.(mp4|mov|webm)$/i.test(f)).map(f=>({file:f,url:`/backgrounds/${f}`}));
+  res.json({files});
+});
+
+app.post('/api/backgrounds/download', async (req, res) => {
+  const { url } = req.body || {};
+  if(!url) return res.status(400).json({error:'Missing url'});
+  try{
+    const id = nanoid(6);
+    const out = path.join(bgDir, `${id}.mp4`);
+    await ytdlp(url, { output: out, noCheckCertificates: true, noWarnings: true, preferFreeFormats: true, format: 'mp4/bestaudio/best' });
+    res.json({file: path.basename(out), url: `/backgrounds/${path.basename(out)}`});
+  }catch(err){
+    res.status(500).json({error:String(err?.stderr || err?.message || err)});
+  }
 });
 
 app.get('/api/videos', (req, res) => {
@@ -103,9 +124,12 @@ app.post('/api/generate', async (req, res) => {
     totalEpisodes = 7,
     messages = defaultMessages(),
     durationSec = 90,
-    fps = 24,
+    fps = 60,
     width = 1080,
     height = 1920,
+    backgroundUrl = '',
+    theme = 'sunset', // 'sunset' | 'aqua' | 'violet'
+    messageDelay = null // override auto spacing in seconds
   } = req.body || {};
 
   const jobId = nanoid(8);
@@ -117,7 +141,7 @@ app.post('/api/generate', async (req, res) => {
   jobs.set(jobId, job);
 
   // Fire and forget
-  generateVideo({ job, title, episode, totalEpisodes, messages, durationSec, fps, width, height, framesPath, outFile })
+  generateVideo({ job, title, episode, totalEpisodes, messages, durationSec, fps, width, height, framesPath, outFile, backgroundUrl, theme, messageDelay })
     .catch((err) => {
       job.status = 'error';
       job.message = String(err?.stack || err);
@@ -126,30 +150,52 @@ app.post('/api/generate', async (req, res) => {
   res.json({ jobId });
 });
 
-async function generateVideo({ job, title, episode, totalEpisodes, messages, durationSec, fps, width, height, framesPath, outFile }) {
+async function ensureBackgroundVideo(backgroundUrl, width, height) {
+  if(!backgroundUrl) return null;
+  if(backgroundUrl.startsWith('/backgrounds/')) return path.join(__dirname, backgroundUrl);
+  const id = nanoid(6);
+  const out = path.join(bgDir, `${id}.mp4`);
+  await ytdlp(backgroundUrl, { output: out, noCheckCertificates: true, noWarnings: true, preferFreeFormats: true, format: 'mp4/bestaudio/best' });
+  // scale/crop to canvas
+  const scaled = path.join(bgDir, `${id}-scaled.mp4`);
+  await new Promise((resolve,reject)=>{
+    ffmpeg(out)
+      .videoFilters([`scale=w=${width}:h=${height}:force_original_aspect_ratio=cover,setsar=1`])
+      .outputOptions(['-c:v libx264','-preset ultrafast','-crf 23','-pix_fmt yuv420p'])
+      .on('error',reject)
+      .on('end',resolve)
+      .save(scaled);
+  });
+  return scaled;
+}
+
+async function generateVideo({ job, title, episode, totalEpisodes, messages, durationSec, fps, width, height, framesPath, outFile, backgroundUrl, theme, messageDelay }) {
   job.status = 'rendering';
   job.message = 'Launching headless browser';
 
-  // Frame skipping for speed (render every 2nd frame)
-  const frameStep = 2;
+  const frameStep = 2; // even at 60fps capture every 2nd frame -> 30fps effective input, output still 60fps
   const totalFrames = Math.floor((durationSec * fps) / frameStep);
   const browser = await puppeteer.launch({
     headless: 'new',
     defaultViewport: { width, height },
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
+  let bgVideo = null;
   try {
+    // Resolve background video in parallel with page load
     const page = await browser.newPage();
     await page.goto('file://' + path.join(__dirname, 'templates', 'video.html'));
 
+    const bgPromise = ensureBackgroundVideo(backgroundUrl, width, height).catch(()=>null);
+
     await page.evaluate((data) => {
       window.__VIDEO_DATA__ = data;
-    }, { title, episode, totalEpisodes, messages, durationSec, fps, width, height });
+    }, { title, episode, totalEpisodes, messages, durationSec, fps, width, height, theme, messageDelay });
 
     await page.evaluate(() => window.startRender && window.startRender());
-
-    // Give page time to init
     await new Promise((r)=>setTimeout(r,300));
+
+    bgVideo = await bgPromise;
 
     for (let i = 0; i < totalFrames; i++) {
       const t = (i * frameStep) / fps;
@@ -167,23 +213,29 @@ async function generateVideo({ job, title, episode, totalEpisodes, messages, dur
     job.progress = 85;
 
     await new Promise((resolve, reject) => {
-      ffmpeg()
-        .input(path.join(framesPath, 'frame_%05d.jpg'))
-        .inputOptions(['-framerate ' + fps])
+      const inputPattern = path.join(framesPath, 'frame_%05d.jpg');
+      const command = ffmpeg().input(inputPattern).inputOptions(['-framerate ' + Math.round(fps/frameStep)])
         .outputOptions([
           '-c:v libx264',
           '-preset ultrafast',
           '-crf 23',
           '-pix_fmt yuv420p',
           '-r ' + fps,
-        ])
-        .on('start', (cmd) => {
-          ffmpeg.setFfmpegPath(ffmpegPath);
-        })
+        ]);
+      if (bgVideo) {
+        // Overlay frames on background video
+        command
+          .input(bgVideo)
+          .complexFilter([
+            '[1:v]scale='+width+':'+height+':force_original_aspect_ratio=cover,setsar=1[bg]',
+            '[0:v]setpts=PTS-STARTPTS[fg]',
+            '[bg][fg]overlay=(W-w)/2:(H-h)/2:shortest=1[outv]'
+          ], 'outv')
+          .map('outv');
+      }
+      command
         .on('progress', (p) => {
-          if (p.percent) {
-            job.progress = 85 + Math.min(10, Math.round(p.percent / 10));
-          }
+          if (p.percent) job.progress = 85 + Math.min(10, Math.round(p.percent / 10));
         })
         .on('error', (err) => reject(err))
         .on('end', resolve)
@@ -196,7 +248,6 @@ async function generateVideo({ job, title, episode, totalEpisodes, messages, dur
     job.outputFile = outFile;
   } finally {
     await browser.close();
-    // Cleanup frames directory lazily
     setTimeout(() => {
       try {
         fs.rmSync(framesPath, { recursive: true, force: true });
@@ -207,11 +258,8 @@ async function generateVideo({ job, title, episode, totalEpisodes, messages, dur
 
 function defaultMessages() {
   return [
-    { type: 'text', who: 'other', name: 'Ava', text: 'WE DID IT BABE! I\'M PREGNANT!' },
+    { type: 'text', who: 'other', icon:'🍼', text: 'WE DID IT BABE! I\'M PREGNANT!' },
     { type: 'text', who: 'you', text: 'fr?' },
-    { type: 'text', who: 'other', name: 'Ava', text: 'YES! I\'m so excited for US 😘' },
-    { type: 'text', who: 'other', name: 'Ava', text: 'I know this has been a dream of yours too' },
-    { type: 'system', text: 'Detalhes importam.' },
     { type: 'media', who: 'other', name: 'Ava', image: '', caption: 'Ultrassom 10:23' },
     { type: 'alert', text: 'Continua no Ep. 2…' },
   ];

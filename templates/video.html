@@ -8,6 +8,10 @@
     :root{
       --yellow:#f2c94c; --cyan:#56ccf2; --red:#ff5b5b; --panel:#0e1116cc; --text:#e6edf3; --muted:#9aa4b2;
     }
+    /* themes: sunset, aqua, violet */
+    .theme-sunset{ --cyan:#ffd166; --panel:#1a100acc; }
+    .theme-aqua{ --cyan:#5eead4; --panel:#0b1b1fcc; }
+    .theme-violet{ --cyan:#c084fc; --panel:#1b0b1fcc; }
     html,body{margin:0;height:100%;overflow:hidden;background:#000;color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',sans-serif}
     .stage{position:relative;width:100vw;height:100vh;background:#000}
 
@@ -40,7 +44,7 @@
   </style>
 </head>
 <body>
-  <div class="stage">
+  <div class="stage" id="stage">
     <div class="bg" id="bg">
       <div class="layer" id="bgLayer"></div>
       <div class="grain"></div>
@@ -150,8 +154,8 @@
       }
 
       // message schedule every ~1.8s
-      const interval = Math.max(1.3, Math.min(2.1, durationSec / Math.max(1, messages.length+1)));
-      const idx = Math.floor(t / interval); // show next when entering slot
+      const interval = (data.messageDelay && data.messageDelay > 0) ? data.messageDelay : Math.max(1.2, Math.min(2.0, durationSec / Math.max(1, messages.length+1)));
+      const idx = Math.floor(t / interval);
       if(idx !== ctx.lastIdx && idx >= 0 && idx < messages.length){
         ctx.lastIdx = idx;
         const msg = messages[idx];
@@ -177,6 +181,9 @@
     function startRender(){
       const data = window.__VIDEO_DATA__;
       document.getElementById('ep').textContent = `Ep. ${data.episode||1}/${data.totalEpisodes||7}`;
+      const stage = document.getElementById('stage');
+      stage.classList.remove('theme-sunset','theme-aqua','theme-violet');
+      stage.classList.add('theme-'+(data.theme||'sunset'));
       ctx.started=true;
     }
 
