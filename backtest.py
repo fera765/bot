@@ -33,6 +33,9 @@ HORAS_HISTORICAS_PARA_ANALISAR_DEFAULT = 24
 TOP_K_PARES_DEFAULT = 5
 MIN_ACC_HIST_DEFAULT = 0.60
 MIN_SINAIS_HIST_DEFAULT = 3
+VOL_TOL_K_DEFAULT = 0.50
+MIN_ZONE_STRENGTH_COUNT_DEFAULT = 2
+MIN_PRED_OCCURRENCES_DEFAULT = 3
 
 
 @dataclass
@@ -50,6 +53,9 @@ class Settings:
     top_k_pares: int = TOP_K_PARES_DEFAULT
     min_acc_hist: float = MIN_ACC_HIST_DEFAULT
     min_sinais_hist: int = MIN_SINAIS_HIST_DEFAULT
+    vol_tol_k: float = VOL_TOL_K_DEFAULT
+    min_zone_strength_count: int = MIN_ZONE_STRENGTH_COUNT_DEFAULT
+    min_pred_occurrences: int = MIN_PRED_OCCURRENCES_DEFAULT
 
 
 def human_bytes(num_bytes: int) -> str:
@@ -479,6 +485,9 @@ def build_time_color_map(df_or_dict, days: List[dt.date]) -> Dict[str, str]:
     for hhmm, arr in by_hhmm.items():
         if not arr:
             continue
+        # exigir ocorrências mínimas para evitar ruído
+        if len(arr) < current_settings.min_pred_occurrences:
+            continue
         pos = sum(1 for v in arr if v == 1)
         neg = sum(1 for v in arr if v == -1)
         total = pos + neg
@@ -622,6 +631,111 @@ def get_sr_cached(sym: str, symbol_df, ref_day: dt.date, settings: Settings) -> 
     return sup_c, res_c
 
 
+def cluster_levels_with_counts(levels: List[float], max_pct_dist: float) -> List[Tuple[float, int]]:
+    if not levels:
+        return []
+    levels_sorted = sorted(levels)
+    clusters: List[List[float]] = []
+    current: List[float] = [levels_sorted[0]]
+    for price in levels_sorted[1:]:
+        mean_price = sum(current) / len(current)
+        if abs(price - mean_price) / mean_price <= max_pct_dist:
+            current.append(price)
+        else:
+            clusters.append(current)
+            current = [price]
+    clusters.append(current)
+    return [(sum(c) / len(c), len(c)) for c in clusters]
+
+
+def get_sr_cached_counts(sym: str, symbol_df, ref_day: dt.date, settings: Settings) -> Tuple[List[Tuple[float, int]], List[Tuple[float, int]]]:
+    key = (sym, ref_day.isoformat(), settings.pivot_window, settings.distancia_agrupamento_percentual, settings.dias_para_backtest)
+    if key in _sr_counts_cache:
+        return _sr_counts_cache[key]
+    hist = slice_days_back(symbol_df, ref_day, settings.dias_para_backtest)
+    res_levels, sup_levels = detect_pivots(hist, settings.pivot_window)
+    res_c = cluster_levels_with_counts(res_levels, settings.distancia_agrupamento_percentual)
+    sup_c = cluster_levels_with_counts(sup_levels, settings.distancia_agrupamento_percentual)
+    _sr_counts_cache[key] = (sup_c, res_c)
+    return sup_c, res_c
+
+
+def compute_median_range(symbol_df, ref_day: dt.date, settings: Settings) -> float:
+    hist = slice_days_back(symbol_df, ref_day, settings.dias_para_backtest)
+    ranges: List[float] = []
+    if pd is None or not hasattr(hist, "index"):
+        highs = hist["high"]
+        lows = hist["low"]
+        for h, l in zip(highs, lows):
+            ranges.append(max(0.0, float(h) - float(l)))
+    else:
+        diff = (hist["high"] - hist["low"]).astype(float)  # type: ignore[index]
+        ranges = diff.tolist()
+    ranges = [r for r in ranges if r is not None]
+    if not ranges:
+        return 0.0
+    ranges_sorted = sorted(ranges)
+    mid = len(ranges_sorted) // 2
+    if len(ranges_sorted) % 2 == 1:
+        return float(ranges_sorted[mid])
+    return float((ranges_sorted[mid - 1] + ranges_sorted[mid]) / 2)
+
+
+def get_all_times(symbol_df) -> List[dt.datetime]:
+    if pd is None or not hasattr(symbol_df, "index"):
+        return list(symbol_df["time"])  # type: ignore[return-value]
+    return list(symbol_df.index.tolist())
+
+
+def compute_sma(values: List[float], period: int) -> Optional[float]:
+    if len(values) < period or period <= 0:
+        return None
+    window = values[-period:]
+    return sum(window) / float(period)
+
+
+def slope_by_sma(symbol_df, t: dt.datetime, period: int) -> Optional[float]:
+    times = get_all_times(symbol_df)
+    if not times:
+        return None
+    # localizar posição do candle imediatamente anterior a t
+    try:
+        idx = times.index(t)
+    except ValueError:
+        times_before = [tt for tt in times if tt < t]
+        if not times_before:
+            return None
+        idx = len(times_before)
+    idx_prev = idx - 1
+    idx_prev2 = idx - 2
+    if idx_prev < period or idx_prev2 < period - 1:
+        return None
+    # coletar closes
+    if pd is None or not hasattr(symbol_df, "index"):
+        closes = symbol_df["close"]
+    else:
+        closes = symbol_df["close"].tolist()
+    sma_now = compute_sma(closes[: idx_prev + 1], period)
+    sma_prev = compute_sma(closes[: idx_prev2 + 1], period)
+    if sma_now is None or sma_prev is None:
+        return None
+    return float(sma_now - sma_prev)
+
+
+def nearest_zone_type_abs(prev_close: float, supports: List[float], resistances: List[float], tol_abs: float) -> Optional[str]:
+    near_support = [abs(prev_close - s) for s in supports if abs(prev_close - s) <= tol_abs]
+    near_resist = [abs(prev_close - r) for r in resistances if abs(prev_close - r) <= tol_abs]
+    has_support = len(near_support) > 0
+    has_resist = len(near_resist) > 0
+    if has_support and not has_resist:
+        return "support"
+    if has_resist and not has_support:
+        return "resistance"
+    if has_support and has_resist:
+        return "support" if min(near_support) <= min(near_resist) else "resistance"
+    return None
+
+
 def get_time_map_cached(sym: str, symbol_df, ref_day: dt.date, settings: Settings) -> Dict[str, str]:
     key = (sym, ref_day.isoformat(), settings.dias_predominancia, settings.pct_predominancia)
     if key in _time_map_cache:
@@ -640,8 +754,11 @@ def compute_symbol_hist_performance(sym: str, symbol_df, ref_day: dt.date, setti
     start_time = end_time - dt.timedelta(hours=settings.horas_historicas_para_analisar)
     times = sorted(get_times_between(symbol_df, start_time, end_time))
     # preparar S/R até ref_day e mapa temporal até ref_day (usando dias anteriores a ref_day)
-    supports, resistances = get_sr_cached(sym, symbol_df, ref_day, settings)
+    sup_counts, res_counts = get_sr_cached_counts(sym, symbol_df, ref_day, settings)
+    supports = [p for (p, c) in sup_counts if c >= settings.min_zone_strength_count]
+    resistances = [p for (p, c) in res_counts if c >= settings.min_zone_strength_count]
     direction_map = get_time_map_cached(sym, symbol_df, ref_day, settings)
+    median_range = compute_median_range(symbol_df, ref_day, settings)
     wins = 0
     losses = 0
     signals_count = 0
@@ -652,7 +769,9 @@ def compute_symbol_hist_performance(sym: str, symbol_df, ref_day: dt.date, setti
         if prev_oc is None:
             continue
         prev_close = prev_oc[1]
-        zone_type = nearest_zone_type(prev_close, supports, resistances, settings.tolerancia_zona_percentual)
+        # tolerância dinâmica por volatilidade
+        tol_abs = max(prev_close * settings.tolerancia_zona_percentual, median_range * settings.vol_tol_k)
+        zone_type = nearest_zone_type_abs(prev_close, supports, resistances, tol_abs)
         if zone_type is None:
             continue
         conf = temporal_confluence(direction_map, t, settings.confluencia_steps, settings.intervalo_predicao_minutos)
@@ -660,6 +779,15 @@ def compute_symbol_hist_performance(sym: str, symbol_df, ref_day: dt.date, setti
             continue
         if (conf == "CALL" and zone_type != "support") or (conf == "PUT" and zone_type != "resistance"):
             continue
+        # filtro direcional: cor do candle anterior e slope da SMA
+        prev_open, prev_close_val = prev_oc
+        slope = slope_by_sma(symbol_df, t, period=20) or 0.0
+        if conf == "CALL":
+            if not (prev_close_val < prev_open and slope >= 0):
+                continue
+        else:
+            if not (prev_close_val > prev_open and slope <= 0):
+                continue
         # passou critérios -> sinal
         signals_count += 1
         outcome = check_win(symbol_df, t, conf, settings.intervalo_predicao_minutos)
@@ -701,7 +829,9 @@ def run_backtest(candles_dict: Dict[str, List[Dict[str, Any]]], settings: Settin
         total_losses = 0
         for sym, series in symbol_to_series.items():
             # preparar S/R a partir de até ref_day (sem ver pred_day)
-            supports, resistances = get_sr_cached(sym, series, ref_day, settings)
+            sup_counts, res_counts = get_sr_cached_counts(sym, series, ref_day, settings)
+            supports = [p for (p, c) in sup_counts if c >= settings.min_zone_strength_count]
+            resistances = [p for (p, c) in res_counts if c >= settings.min_zone_strength_count]
             # mapa temporal baseado nos últimos N dias antes de pred_day
             direction_map = get_time_map_cached(sym, series, pred_day, settings)
             # gerar sinais para pred_day
@@ -955,11 +1085,13 @@ current_settings = Settings()
 # Caches globais para acelerar
 _sr_cache: Dict[Tuple[str, str, int, float, int], Tuple[List[float], List[float]]] = {}
 _time_map_cache: Dict[Tuple[str, str, int, float], Dict[str, str]] = {}
+_sr_counts_cache: Dict[Tuple[str, str, int, float, int], Tuple[List[Tuple[float, int]], List[Tuple[float, int]]]] = {}
 
 
 def clear_caches() -> None:
     _sr_cache.clear()
     _time_map_cache.clear()
+    _sr_counts_cache.clear()
 
 
 def main() -> int:
