@@ -944,6 +944,9 @@ def calibrate_config(candles_dict: Dict[str, List[Dict[str, Any]]], base_ref_day
     top_k_list = [3, 5, 7]
     min_acc_hist_list = [0.60, 0.70, 0.80]
     min_sinais_hist_list = [3, 5]
+    vol_tol_k_list = [0.5, 0.8, 1.0]
+    min_zone_strength_list = [1, 2]
+    min_pred_occ_list = [2, 3, 4]
     best = None
     best_score = (-1.0, -1)  # (accuracy, evaluated)
     for pct in pct_pred_list:
@@ -955,31 +958,37 @@ def calibrate_config(candles_dict: Dict[str, List[Dict[str, Any]]], base_ref_day
                             for tk in top_k_list:
                                 for mah in min_acc_hist_list:
                                     for msh in min_sinais_hist_list:
-                                        cand = Settings(
-                                            dias_para_backtest=initial.dias_para_backtest,
-                                            dias_predominancia=dp,
-                                            pct_predominancia=pct,
-                                            horas_futuras_para_prever=initial.horas_futuras_para_prever,
-                                            intervalo_predicao_minutos=initial.intervalo_predicao_minutos,
-                                            pivot_window=pw,
-                                            distancia_agrupamento_percentual=cp,
-                                            tolerancia_zona_percentual=tz,
-                                            confluencia_steps=cs,
-                                            horas_historicas_para_analisar=initial.horas_historicas_para_analisar,
-                                            top_k_pares=tk,
-                                            min_acc_hist=mah,
-                                            min_sinais_hist=msh,
-                                        )
-                                        res = evaluate_day(candles_dict, cand, base_ref_day)
-                                        acc = res["totals"]["accuracy"]
-                                        evaluated = res["totals"]["evaluated"]
-                                        score = (acc, evaluated)
-                                        if score > best_score:
-                                            best_score = score
-                                            best = cand
-                                        # early stop if meets min_acc and enough evals
-                                        if acc >= min_acc and evaluated > 0:
-                                            return cand
+                                        for vk in vol_tol_k_list:
+                                            for zc in min_zone_strength_list:
+                                                for mpo in min_pred_occ_list:
+                                                    cand = Settings(
+                                                        dias_para_backtest=initial.dias_para_backtest,
+                                                        dias_predominancia=dp,
+                                                        pct_predominancia=pct,
+                                                        horas_futuras_para_prever=initial.horas_futuras_para_prever,
+                                                        intervalo_predicao_minutos=initial.intervalo_predicao_minutos,
+                                                        pivot_window=pw,
+                                                        distancia_agrupamento_percentual=cp,
+                                                        tolerancia_zona_percentual=tz,
+                                                        confluencia_steps=cs,
+                                                        horas_historicas_para_analisar=initial.horas_historicas_para_analisar,
+                                                        top_k_pares=tk,
+                                                        min_acc_hist=mah,
+                                                        min_sinais_hist=msh,
+                                                        vol_tol_k=vk,
+                                                        min_zone_strength_count=zc,
+                                                        min_pred_occurrences=mpo,
+                                                    )
+                                                    res = evaluate_day(candles_dict, cand, base_ref_day)
+                                                    acc = res["totals"]["accuracy"]
+                                                    evaluated = res["totals"]["evaluated"]
+                                                    score = (acc, evaluated)
+                                                    if score > best_score:
+                                                        best_score = score
+                                                        best = cand
+                                                    # early stop if meets min_acc and enough evals
+                                                    if acc >= min_acc and evaluated > 0:
+                                                        return cand
     return best or initial
 
 
@@ -1116,6 +1125,9 @@ def main() -> int:
     parser.add_argument("--top-k", type=int, default=TOP_K_PARES_DEFAULT, help="Top-K pares por desempenho histórico")
     parser.add_argument("--min-acc-hist", type=float, default=MIN_ACC_HIST_DEFAULT, help="Acurácia mínima histórica para considerar o par")
     parser.add_argument("--min-sinais-hist", type=int, default=MIN_SINAIS_HIST_DEFAULT, help="Mínimo de sinais históricos avaliados para considerar o par")
+    parser.add_argument("--vol-tol-k", type=float, default=VOL_TOL_K_DEFAULT, help="Fator da tolerância absoluta baseada em volatilidade mediana")
+    parser.add_argument("--min-zone-strength-count", type=int, default=MIN_ZONE_STRENGTH_COUNT_DEFAULT, help="Contagem mínima de pivôs no cluster da zona")
+    parser.add_argument("--min-pred-occ", type=int, default=MIN_PRED_OCCURRENCES_DEFAULT, help="Ocorrências mínimas para aceitar predominância de horário")
     args = parser.parse_args()
 
     path = args.path
@@ -1166,6 +1178,9 @@ def main() -> int:
             top_k_pares=args.top_k,
             min_acc_hist=args.min_acc_hist,
             min_sinais_hist=args.min_sinais_hist,
+            vol_tol_k=args.vol_tol_k,
+            min_zone_strength_count=args.min_zone_strength_count,
+            min_pred_occurrences=args.min_pred_occ,
         )
 
         candles_dict = obj
