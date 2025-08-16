@@ -955,18 +955,18 @@ def evaluate_day(candles_dict: Dict[str, List[Dict[str, Any]]], settings: Settin
 
 def calibrate_config(candles_dict: Dict[str, List[Dict[str, Any]]], base_ref_day: dt.date, min_acc: float, initial: Settings) -> Settings:
     # busca em grade usando APENAS o desempenho de base_ref_day -> base_ref_day+1
-    pct_pred_list = [0.70, 0.75, 0.80, 0.85]
-    dias_pred_list = [3, 4, 5]
-    pivot_window_list = [1, 2, 3]
-    cluster_pct_list = [0.0005, 0.001, 0.002]
-    tol_zone_list = [0.0005, 0.001, 0.002]
+    pct_pred_list = [0.75, 0.80]
+    dias_pred_list = [4, 5]
+    pivot_window_list = [2]
+    cluster_pct_list = [0.001, 0.002]
+    tol_zone_list = [0.001, 0.002]
     conf_steps_list = [2, 3]
-    top_k_list = [3, 5, 7]
-    min_acc_hist_list = [0.60, 0.70, 0.80]
-    min_sinais_hist_list = [3, 5]
-    vol_tol_k_list = [0.5, 0.8, 1.0]
-    min_zone_strength_list = [1, 2]
-    min_pred_occ_list = [2, 3, 4]
+    top_k_list = [5]
+    min_acc_hist_list = [0.70]
+    min_sinais_hist_list = [3]
+    vol_tol_k_list = [0.5, 0.8]
+    min_zone_strength_list = [2]
+    min_pred_occ_list = [3]
     best = None
     best_score = (-1.0, -1)  # (accuracy, evaluated)
     for pct in pct_pred_list:
@@ -1053,16 +1053,19 @@ def consistency_grid_search(candles_dict: Dict[str, List[Dict[str, Any]]], start
     days_seq = [start_day - dt.timedelta(days=i) for i in range(num_days)]
     # grade moderada focada em alta precisão
     pct_pred_list = [0.80]
-    dias_pred_list = [4]
+    dias_pred_list = [4, 5]
     pivot_window_list = [2]
-    cluster_pct_list = [0.002]
+    cluster_pct_list = [0.001, 0.002]
     tol_zone_list = [0.001]
-    conf_steps_list = [3]
+    conf_steps_list = [2, 3]
     top_k_list = [5]
     min_acc_hist_list = [0.70]
     min_sinais_hist_list = [3]
+    zone_min_list = [0.0025, 0.003]
+    zone_max_list = [0.0035, 0.004]
+    zone_strength_list = [2]
 
-    for pct, dp, pw, cp, tz, cs, tk, mah, msh in product(
+    for pct, dp, pw, cp, tz, cs, tk, mah, msh, zmin, zmax, zc in product(
         pct_pred_list,
         dias_pred_list,
         pivot_window_list,
@@ -1072,6 +1075,9 @@ def consistency_grid_search(candles_dict: Dict[str, List[Dict[str, Any]]], start
         top_k_list,
         min_acc_hist_list,
         min_sinais_hist_list,
+        zone_min_list,
+        zone_max_list,
+        zone_strength_list,
     ):
         clear_caches()
         cand = Settings(
@@ -1088,6 +1094,9 @@ def consistency_grid_search(candles_dict: Dict[str, List[Dict[str, Any]]], start
             top_k_pares=tk,
             min_acc_hist=mah,
             min_sinais_hist=msh,
+            zone_min_pct=zmin,
+            zone_max_pct=zmax,
+            min_zone_strength_count=zc,
         )
         all_ok = True
         day_outputs: List[Dict[str, Any]] = []
@@ -1230,6 +1239,7 @@ def main() -> int:
 
         if args.auto_tune:
             print_section(f"Auto-tune + Backtest (início no dia {start_day.isoformat()}, 10 dias)")
+            t0 = time.monotonic()
             # 1) tentativa de busca global por uma única configuração consistente
             global_search = consistency_grid_search(candles_dict, start_day, num_days=10, min_acc=args.min_acc, base=current_settings)
             if global_search is not None:
@@ -1241,7 +1251,9 @@ def main() -> int:
                     acc = day_res["totals"]["accuracy"]
                     print(f"Dia {day_res['ref_day']} -> {day_res['pred_day']}: sinais={day_res['totals']['signals']} acurácia={acc*100:.2f}%")
                 print_section("Resumo")
+                elapsed = time.monotonic() - t0
                 print(f"Acurácia média (10 dias): {global_search['avg_accuracy']*100:.2f}% | resets: 0")
+                print(f"Tempo total: {elapsed:.2f}s")
                 print("Status:", "CONSISTENTE")
                 return 0
             tuned = run_autotune_consistency(candles_dict, start_day, num_days=10, min_acc=args.min_acc, max_resets=6)
@@ -1256,7 +1268,9 @@ def main() -> int:
                 if acc < args.min_acc or day_res["totals"]["evaluated"] == 0:
                     all_ok = False
             print_section("Resumo")
+            elapsed = time.monotonic() - t0
             print(f"Acurácia média (10 dias): {tuned['avg_accuracy']*100:.2f}% | resets: {tuned['resets']}")
+            print(f"Tempo total: {elapsed:.2f}s")
             print("Status:", "CONSISTENTE" if all_ok and len(tuned["days"]) == 10 else "NÃO CONSISTENTE")
             return 0
         else:
