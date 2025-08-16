@@ -15,6 +15,7 @@ except Exception:
     pd = None  # type: ignore
 
 import datetime as dt
+import time
 from collections import defaultdict, Counter
 from dataclasses import dataclass
 from itertools import product
@@ -28,7 +29,7 @@ INTERVALO_PREDICAO_MINUTOS_DEFAULT = 5  # dataset de 5m
 PIVOT_WINDOW_DEFAULT = 2
 DISTANCIA_AGRUPAMENTO_PERCENTUAL_DEFAULT = 0.001  # 0.1%
 TOLERANCIA_ZONA_PERCENTUAL_DEFAULT = 0.001  # 0.1%
-CONFLUENCIA_STEPS_DEFAULT = 3  # g0, g1 (+5m), g2 (+10m)
+CONFLUENCIA_STEPS_DEFAULT = 2  # usar 2 por padrão para maior cobertura
 HORAS_HISTORICAS_PARA_ANALISAR_DEFAULT = 24
 TOP_K_PARES_DEFAULT = 5
 MIN_ACC_HIST_DEFAULT = 0.60
@@ -36,6 +37,8 @@ MIN_SINAIS_HIST_DEFAULT = 3
 VOL_TOL_K_DEFAULT = 0.50
 MIN_ZONE_STRENGTH_COUNT_DEFAULT = 2
 MIN_PRED_OCCURRENCES_DEFAULT = 3
+ZONE_MIN_PCT_DEFAULT = 0.002  # 0.2%
+ZONE_MAX_PCT_DEFAULT = 0.005  # 0.5%
 
 
 @dataclass
@@ -56,6 +59,8 @@ class Settings:
     vol_tol_k: float = VOL_TOL_K_DEFAULT
     min_zone_strength_count: int = MIN_ZONE_STRENGTH_COUNT_DEFAULT
     min_pred_occurrences: int = MIN_PRED_OCCURRENCES_DEFAULT
+    zone_min_pct: float = ZONE_MIN_PCT_DEFAULT
+    zone_max_pct: float = ZONE_MAX_PCT_DEFAULT
 
 
 def human_bytes(num_bytes: int) -> str:
@@ -461,6 +466,24 @@ def nearest_zone_type(prev_close: float, supports: List[float], resistances: Lis
     return None
 
 
+def zone_type_by_band(prev_close: float, supports: List[float], resistances: List[float], min_pct: float, max_pct: float) -> Optional[str]:
+    # Seleciona apenas zonas cuja distância percentual esteja entre [min_pct, max_pct]
+    s_dists = [(abs(prev_close - s) / prev_close, s) for s in supports if prev_close != 0]
+    r_dists = [(abs(prev_close - r) / prev_close, r) for r in resistances if prev_close != 0]
+    s_in = [d for d in s_dists if d[0] >= min_pct and d[0] <= max_pct]
+    r_in = [d for d in r_dists if d[0] >= min_pct and d[0] <= max_pct]
+    if not s_in and not r_in:
+        return None
+    if s_in and not r_in:
+        return "support"
+    if r_in and not s_in:
+        return "resistance"
+    # ambos presentes: escolher a mais próxima
+    best_s = min(s_in, key=lambda x: x[0])
+    best_r = min(r_in, key=lambda x: x[0])
+    return "support" if best_s[0] <= best_r[0] else "resistance"
+
+
 def build_time_color_map(df_or_dict, days: List[dt.date]) -> Dict[str, str]:
     # retorna {"HH:MM": "CALL"|"PUT"} quando predominante >= pct, caso contrário não inclui a chave
     if not days:
@@ -606,7 +629,7 @@ def generate_signals_for_day(symbol_df, day: dt.date, settings: Settings, sr_sup
         if prev_oc is None:
             continue
         prev_close = prev_oc[1]
-        zone_type = nearest_zone_type(prev_close, sr_supports, sr_resistances, settings.tolerancia_zona_percentual)
+        zone_type = zone_type_by_band(prev_close, sr_supports, sr_resistances, settings.zone_min_pct, settings.zone_max_pct)
         if zone_type is None:
             continue
         conf = temporal_confluence(direction_map, t, settings.confluencia_steps, settings.intervalo_predicao_minutos)
@@ -758,7 +781,6 @@ def compute_symbol_hist_performance(sym: str, symbol_df, ref_day: dt.date, setti
     supports = [p for (p, c) in sup_counts if c >= settings.min_zone_strength_count]
     resistances = [p for (p, c) in res_counts if c >= settings.min_zone_strength_count]
     direction_map = get_time_map_cached(sym, symbol_df, ref_day, settings)
-    median_range = compute_median_range(symbol_df, ref_day, settings)
     wins = 0
     losses = 0
     signals_count = 0
@@ -769,9 +791,7 @@ def compute_symbol_hist_performance(sym: str, symbol_df, ref_day: dt.date, setti
         if prev_oc is None:
             continue
         prev_close = prev_oc[1]
-        # tolerância dinâmica por volatilidade
-        tol_abs = max(prev_close * settings.tolerancia_zona_percentual, median_range * settings.vol_tol_k)
-        zone_type = nearest_zone_type_abs(prev_close, supports, resistances, tol_abs)
+        zone_type = zone_type_by_band(prev_close, supports, resistances, settings.zone_min_pct, settings.zone_max_pct)
         if zone_type is None:
             continue
         conf = temporal_confluence(direction_map, t, settings.confluencia_steps, settings.intervalo_predicao_minutos)
@@ -1128,6 +1148,8 @@ def main() -> int:
     parser.add_argument("--vol-tol-k", type=float, default=VOL_TOL_K_DEFAULT, help="Fator da tolerância absoluta baseada em volatilidade mediana")
     parser.add_argument("--min-zone-strength-count", type=int, default=MIN_ZONE_STRENGTH_COUNT_DEFAULT, help="Contagem mínima de pivôs no cluster da zona")
     parser.add_argument("--min-pred-occ", type=int, default=MIN_PRED_OCCURRENCES_DEFAULT, help="Ocorrências mínimas para aceitar predominância de horário")
+    parser.add_argument("--zone-min-pct", type=float, default=ZONE_MIN_PCT_DEFAULT, help="Distância mínima da zona em % (ex.: 0.002=0.2%)")
+    parser.add_argument("--zone-max-pct", type=float, default=ZONE_MAX_PCT_DEFAULT, help="Distância máxima da zona em % (ex.: 0.005=0.5%)")
     args = parser.parse_args()
 
     path = args.path
@@ -1181,6 +1203,8 @@ def main() -> int:
             vol_tol_k=args.vol_tol_k,
             min_zone_strength_count=args.min_zone_strength_count,
             min_pred_occurrences=args.min_pred_occ,
+            zone_min_pct=args.zone_min_pct,
+            zone_max_pct=args.zone_max_pct,
         )
 
         candles_dict = obj
@@ -1237,7 +1261,9 @@ def main() -> int:
             return 0
         else:
             print_section(f"Backtest (início no dia {start_day.isoformat()}, 10 dias para trás)")
+            t0 = time.monotonic()
             result = run_backtest(candles_dict, current_settings, start_day, num_days=10)
+            elapsed = time.monotonic() - t0
             # imprimir resultados resumidos
             print("Configurações:")
             for k, v in result["settings"].items():
@@ -1251,6 +1277,7 @@ def main() -> int:
                     consistent = False
             print_section("Resumo")
             print(f"Acurácia média (10 dias): {result['avg_accuracy']*100:.2f}%")
+            print(f"Tempo total: {elapsed:.2f}s")
             if consistent:
                 print("Status: CONSISTENTE (todos os dias acima do alvo)")
                 return 0
