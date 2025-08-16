@@ -967,6 +967,8 @@ def calibrate_config(candles_dict: Dict[str, List[Dict[str, Any]]], base_ref_day
     vol_tol_k_list = [0.5, 0.8]
     min_zone_strength_list = [2]
     min_pred_occ_list = [3]
+    zone_min_list = [0.002, 0.0025, 0.003]
+    zone_max_list = [0.0035, 0.004, 0.005]
     best = None
     best_score = (-1.0, -1)  # (accuracy, evaluated)
     for pct in pct_pred_list:
@@ -981,34 +983,40 @@ def calibrate_config(candles_dict: Dict[str, List[Dict[str, Any]]], base_ref_day
                                         for vk in vol_tol_k_list:
                                             for zc in min_zone_strength_list:
                                                 for mpo in min_pred_occ_list:
-                                                    cand = Settings(
-                                                        dias_para_backtest=initial.dias_para_backtest,
-                                                        dias_predominancia=dp,
-                                                        pct_predominancia=pct,
-                                                        horas_futuras_para_prever=initial.horas_futuras_para_prever,
-                                                        intervalo_predicao_minutos=initial.intervalo_predicao_minutos,
-                                                        pivot_window=pw,
-                                                        distancia_agrupamento_percentual=cp,
-                                                        tolerancia_zona_percentual=tz,
-                                                        confluencia_steps=cs,
-                                                        horas_historicas_para_analisar=initial.horas_historicas_para_analisar,
-                                                        top_k_pares=tk,
-                                                        min_acc_hist=mah,
-                                                        min_sinais_hist=msh,
-                                                        vol_tol_k=vk,
-                                                        min_zone_strength_count=zc,
-                                                        min_pred_occurrences=mpo,
-                                                    )
-                                                    res = evaluate_day(candles_dict, cand, base_ref_day)
-                                                    acc = res["totals"]["accuracy"]
-                                                    evaluated = res["totals"]["evaluated"]
-                                                    score = (acc, evaluated)
-                                                    if score > best_score:
-                                                        best_score = score
-                                                        best = cand
-                                                    # early stop if meets min_acc and enough evals
-                                                    if acc >= min_acc and evaluated > 0:
-                                                        return cand
+                                                    for zmin in zone_min_list:
+                                                        for zmax in zone_max_list:
+                                                            if zmin >= zmax:
+                                                                continue
+                                                            cand = Settings(
+                                                                dias_para_backtest=initial.dias_para_backtest,
+                                                                dias_predominancia=dp,
+                                                                pct_predominancia=pct,
+                                                                horas_futuras_para_prever=initial.horas_futuras_para_prever,
+                                                                intervalo_predicao_minutos=initial.intervalo_predicao_minutos,
+                                                                pivot_window=pw,
+                                                                distancia_agrupamento_percentual=cp,
+                                                                tolerancia_zona_percentual=tz,
+                                                                confluencia_steps=cs,
+                                                                horas_historicas_para_analisar=initial.horas_historicas_para_analisar,
+                                                                top_k_pares=tk,
+                                                                min_acc_hist=mah,
+                                                                min_sinais_hist=msh,
+                                                                vol_tol_k=vk,
+                                                                min_zone_strength_count=zc,
+                                                                min_pred_occurrences=mpo,
+                                                                zone_min_pct=zmin,
+                                                                zone_max_pct=zmax,
+                                                            )
+                                                            res = evaluate_day(candles_dict, cand, base_ref_day)
+                                                            acc = res["totals"]["accuracy"]
+                                                            evaluated = res["totals"]["evaluated"]
+                                                            score = (acc, evaluated)
+                                                            if score > best_score:
+                                                                best_score = score
+                                                                best = cand
+                                                            # early stop if meets min_acc and enough evals
+                                                            if acc >= min_acc and evaluated > 0:
+                                                                return cand
     return best or initial
 
 
@@ -1031,8 +1039,8 @@ def run_autotune_consistency(candles_dict: Dict[str, List[Dict[str, Any]]], star
             evaluated = res["totals"]["evaluated"]
             if evaluated == 0 or acc < min_acc:
                 ok_all = False
-                # calibrar com o dia anterior ao que falhou
-                base_ref_day = ref_day - dt.timedelta(days=1)
+                # calibrar com o MESMO dia quando não há avaliações para garantir geração de sinais
+                base_ref_day = ref_day if evaluated == 0 else (ref_day - dt.timedelta(days=1))
                 settings = calibrate_config(candles_dict, base_ref_day, min_acc, settings)
                 resets += 1
                 break
